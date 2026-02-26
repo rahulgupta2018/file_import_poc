@@ -1,0 +1,1300 @@
+# =============================================================================
+# Validation Rules Configuration
+# =============================================================================
+# All 85 validation rules are declared here as data, NOT hardcoded in Java.
+# The Rules Engine loads this file at startup via RuleRegistry.
+#
+# Adding / removing / modifying a rule requires ONLY a YAML change + restart.
+# No Java code changes are needed unless a brand-new evaluator type is needed.
+#
+# Schema:
+#   ruleId       — Unique ID (VR-{CATEGORY}-{NNN})
+#   description  — Human-readable explanation shown in UI and audit log
+#   category     — Rule category (FILE, STRUCT, SEQ, DATE, AMT, DBT, BEN, XML, FLT, ERP, GEN)
+#   appliesTo    — List of source file types: CSV, XML, FLT, ERP, ALL
+#   severity     — ERROR | WARN
+#   autoFixable  — true | false | prompt
+#   evaluator    — Evaluator class key (resolved via EvaluatorFactory — Strategy pattern)
+#   parameters   — Evaluator-specific params (thresholds, patterns, field refs, etc.)
+#   transformId  — (optional) Transform to apply if autoFixable is true
+#   phase        — Evaluation phase: STRUCTURAL | FIELD_LEVEL | FORMAT_SPECIFIC | CROSS_CUTTING
+#   enabled      — true | false (allows disabling without deletion)
+#   version      — Rule version for audit trail
+# =============================================================================
+
+version: "1.0"
+lastUpdated: "2026-02-26"
+
+# ---------------------------------------------------------------------------
+# E.1  File-Level Rules (VR-FILE)
+# ---------------------------------------------------------------------------
+rules:
+
+  - ruleId: VR-FILE-001
+    description: "CSV file must not exceed 0.5 MB"
+    category: FILE
+    appliesTo: [CSV, ERP]
+    severity: ERROR
+    autoFixable: false
+    evaluator: file-size
+    parameters:
+      maxBytes: 524288
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-002
+    description: "XML file must not exceed 6 MB"
+    category: FILE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: file-size
+    parameters:
+      maxBytes: 6291456
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-003
+    description: "Single-debit Bacs file must not exceed 1,250 payment entries"
+    category: FILE
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: entry-count
+    parameters:
+      maxEntries: 1250
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-004
+    description: "XML encoding must be UTF-8 without BOM"
+    category: FILE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-BOM
+    evaluator: encoding-check
+    parameters:
+      expectedEncoding: UTF-8
+      rejectBom: true
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-005
+    description: "XML declaration must use standalone='yes' (not 'true')"
+    category: FILE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-STANDALONE
+    evaluator: xml-declaration
+    parameters:
+      attribute: standalone
+      expectedValue: "yes"
+      invalidValues: ["true"]
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-006
+    description: "XML must validate against pain.001.001.03 XSD namespace"
+    category: FILE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: xsd-validation
+    parameters:
+      namespace: "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"
+      schemaPath: "schemas/pain.001.001.03.xsd"
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-007
+    description: "CSV file must be comma-delimited"
+    category: FILE
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: delimiter-check
+    parameters:
+      expectedDelimiter: ","
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FILE-008
+    description: "Fixed-length records must be consistent length (~100 chars for Std 18)"
+    category: FILE
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: false
+    evaluator: fixed-length-consistency
+    parameters:
+      toleranceChars: 0
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.2  Structural / Record-Sequencing Rules (VR-STRUCT)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-STRUCT-001
+    description: "CSV must contain exactly one H record as first row"
+    category: STRUCT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: record-count
+    parameters:
+      recordType: H
+      position: first
+      exactCount: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-002
+    description: "CSV must contain exactly one T record as last row"
+    category: STRUCT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: record-count
+    parameters:
+      recordType: T
+      position: last
+      exactCount: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-003
+    description: "CSV record sequence must follow H, D, C (repeatable), T"
+    category: STRUCT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: record-sequence
+    parameters:
+      expectedSequence: [H, D, C, T]
+      repeatingGroup: [D, C]
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-004
+    description: "Every D record must be followed by at least one C record"
+    category: STRUCT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: record-pair
+    parameters:
+      precursor: D
+      successor: C
+      minSuccessors: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-005
+    description: "File must not be structurally empty"
+    category: STRUCT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: non-empty
+    parameters: {}
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-006
+    description: "XML must have exactly one GrpHdr element"
+    category: STRUCT
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: xml-element-count
+    parameters:
+      tagPath: "Document/CstmrCdtTrfInitn/GrpHdr"
+      exactCount: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-007
+    description: "XML must have at least one PmtInf element"
+    category: STRUCT
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: xml-element-count
+    parameters:
+      tagPath: "Document/CstmrCdtTrfInitn/PmtInf"
+      minCount: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-008
+    description: "Each PmtInf must contain at least one CdtTrfTxInf"
+    category: STRUCT
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: xml-child-count
+    parameters:
+      parentPath: "PmtInf"
+      childTag: "CdtTrfTxInf"
+      minCount: 1
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-009
+    description: "Non-standard CSV must have a header row with column names"
+    category: STRUCT
+    appliesTo: [ERP]
+    severity: ERROR
+    autoFixable: false
+    evaluator: header-row-presence
+    parameters: {}
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-STRUCT-010
+    description: "Fixed-length file must not contain H/D/C/T record markers"
+    category: STRUCT
+    appliesTo: [FLT]
+    severity: WARN
+    autoFixable: false
+    evaluator: record-marker-absence
+    parameters:
+      markers: [H, D, C, T]
+    phase: STRUCTURAL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.3  Sequence Number Rules (VR-SEQ)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-SEQ-001
+    description: "Sequence number must be present (H-record, column C)"
+    category: SEQ
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: prompt
+    evaluator: mandatory-field
+    parameters:
+      recordType: H
+      column: C
+      fieldName: sequenceNumber
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-SEQ-002
+    description: "Sequence number must be unique per user within 24-hour rolling window"
+    category: SEQ
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-AUTO-SEQUENCE
+    evaluator: sequence-uniqueness
+    parameters:
+      windowHours: 24
+      scope: user
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-SEQ-003
+    description: "Sequence number must be numeric"
+    category: SEQ
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: false
+    evaluator: pattern-match
+    parameters:
+      pattern: "^\\d+$"
+      fieldName: sequenceNumber
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.4  Date/Time Rules (VR-DATE)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-DATE-001
+    description: "CSV current date (H:B) must be YYYYMMDD"
+    category: DATE
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DATE-REFORMAT
+    evaluator: date-format
+    parameters:
+      fieldRef: "H:B"
+      expectedFormat: "yyyyMMdd"
+      acceptedFormats: ["yyyy-MM-dd", "dd/MM/yyyy", "dd.MM.yyyy", "MM/dd/yyyy"]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-002
+    description: "CSV value date (D:B) must be YYYYMMDD"
+    category: DATE
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DATE-REFORMAT
+    evaluator: date-format
+    parameters:
+      fieldRef: "D:B"
+      expectedFormat: "yyyyMMdd"
+      acceptedFormats: ["yyyy-MM-dd", "dd/MM/yyyy", "dd.MM.yyyy", "MM/dd/yyyy"]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-003
+    description: "XML value date must be YYYY-MM-DD"
+    category: DATE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DATE-REFORMAT
+    evaluator: date-format
+    parameters:
+      fieldRef: "ReqdExctnDt"
+      expectedFormat: "yyyy-MM-dd"
+      acceptedFormats: ["yyyyMMdd", "dd/MM/yyyy"]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-004
+    description: "XML created date-time must be YYYY-MM-DDT:HH:MM:00.000Z"
+    category: DATE
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DATE-REFORMAT
+    evaluator: datetime-format
+    parameters:
+      fieldRef: "CreDtTm"
+      expectedFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-005
+    description: "Value date must be >= 2 business days after import date"
+    category: DATE
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: business-day-offset
+    parameters:
+      minOffsetDays: 2
+      calendar: UK_BANK_HOLIDAYS
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-006
+    description: "2-digit year must be expanded via century-windowing"
+    category: DATE
+    appliesTo: [ERP]
+    severity: WARN
+    autoFixable: true
+    transformId: TF-YEAR-WINDOW
+    evaluator: two-digit-year
+    parameters:
+      pivotYear: 49
+      lowCentury: 2000
+      highCentury: 1900
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-007
+    description: "Ambiguous date formats (DD/MM vs MM/DD when day <= 12) flagged"
+    category: DATE
+    appliesTo: [ERP]
+    severity: WARN
+    autoFixable: prompt
+    evaluator: ambiguous-date
+    parameters:
+      ambiguityThreshold: 12
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DATE-008
+    description: "Date must be a valid calendar date"
+    category: DATE
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: valid-calendar-date
+    parameters: {}
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.5  Amount/Currency Rules (VR-AMT)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-AMT-001
+    description: "Payment amount must be >= 0.01"
+    category: AMT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: numeric-range
+    parameters:
+      fieldName: amount
+      minValue: 0.01
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-002
+    description: "Payment amount must include a decimal point"
+    category: AMT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-ADD-DECIMAL
+    evaluator: decimal-presence
+    parameters:
+      fieldName: amount
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-003
+    description: "Payment amount must have < 18 significant figures"
+    category: AMT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: significant-figures
+    parameters:
+      fieldName: amount
+      maxFigures: 17
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-004
+    description: "Payment amount must not contain commas"
+    category: AMT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-COMMA
+    evaluator: forbidden-chars
+    parameters:
+      fieldName: amount
+      forbiddenChars: [","]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-005
+    description: "Payment amount must not contain currency symbols"
+    category: AMT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-SYMBOL
+    evaluator: forbidden-chars
+    parameters:
+      fieldName: amount
+      forbiddenChars: ["£", "$", "€", "¥"]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-006
+    description: "Fixed-length amount (pence) must be converted to pounds (divide by 100)"
+    category: AMT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-PENCE-TO-POUNDS
+    evaluator: pence-format
+    parameters:
+      fieldName: amount
+      divisor: 100
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-007
+    description: "XML currency attribute must use 3-letter ISO 4217 code"
+    category: AMT
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-CURRENCY-ATTR
+    evaluator: iso-currency
+    parameters:
+      attribute: "Ccy"
+      validCodes: ["GBP", "EUR", "USD"]
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-AMT-008
+    description: "XML InstdAmt must include Ccy attribute"
+    category: AMT
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-CURRENCY-ATTR
+    evaluator: mandatory-attribute
+    parameters:
+      tagPath: "InstdAmt"
+      attribute: "Ccy"
+      defaultValue: "GBP"
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.6  Debit Account Rules (VR-DBT)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-DBT-001
+    description: "Debit account number is mandatory"
+    category: DBT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: prompt
+    evaluator: mandatory-field
+    parameters:
+      fieldName: debitAccountNumber
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-002
+    description: "Debit account must be SSSSSS-AAAAAAAA format"
+    category: DBT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DEBIT-COMPOSITE
+    evaluator: composite-format
+    parameters:
+      fieldName: debitAccount
+      pattern: "^\\d{6}-\\d{8}$"
+      parts: ["sortCode", "accountNumber"]
+      separator: "-"
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-003
+    description: "Debit sort code must be exactly 6 digits"
+    category: DBT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-LEADING-ZERO-PAD
+    evaluator: exact-length
+    parameters:
+      fieldName: debitSortCode
+      exactLength: 6
+      pattern: "^\\d{6}$"
+      padChar: "0"
+      padSide: left
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-004
+    description: "Debit account number must be exactly 8 digits"
+    category: DBT
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-LEADING-ZERO-PAD
+    evaluator: exact-length
+    parameters:
+      fieldName: debitAccountNumber
+      exactLength: 8
+      pattern: "^\\d{8}$"
+      padChar: "0"
+      padSide: left
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-005
+    description: "Debit account ref (if provided) must be min 6 alphanumeric chars"
+    category: DBT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: min-length
+    parameters:
+      fieldName: debitAccountRef
+      minLength: 6
+      optional: true
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-006
+    description: "Debit account ref (if provided) must be max 18 chars"
+    category: DBT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: max-length
+    parameters:
+      fieldName: debitAccountRef
+      maxLength: 18
+      optional: true
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-007
+    description: "Debit account ref (if provided) must have >= 2 unique chars"
+    category: DBT
+    appliesTo: [CSV, XML]
+    severity: ERROR
+    autoFixable: false
+    evaluator: unique-char-count
+    parameters:
+      fieldName: debitAccountRef
+      minUniqueChars: 2
+      optional: true
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-DBT-008
+    description: "CSV D-record column E must be blank (reserved)"
+    category: DBT
+    appliesTo: [CSV]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-CLEAR-RESERVED
+    evaluator: blank-field
+    parameters:
+      recordType: D
+      column: E
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.7  Beneficiary Rules (VR-BEN)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-BEN-001
+    description: "Beneficiary account number is mandatory"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: mandatory-field
+    parameters:
+      fieldName: beneficiaryAccountNumber
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-002
+    description: "Beneficiary account number must be exactly 8 digits"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-LEADING-ZERO-PAD
+    evaluator: exact-length
+    parameters:
+      fieldName: beneficiaryAccountNumber
+      exactLength: 8
+      pattern: "^\\d{8}$"
+      padChar: "0"
+      padSide: left
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-003
+    description: "Beneficiary sort code is mandatory"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: mandatory-field
+    parameters:
+      fieldName: beneficiarySortCode
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-004
+    description: "Beneficiary sort code must be exactly 6 digits, no dashes"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-DASH
+    evaluator: exact-length
+    parameters:
+      fieldName: beneficiarySortCode
+      exactLength: 6
+      pattern: "^\\d{6}$"
+      preTransformId: TF-STRIP-DASH
+      padChar: "0"
+      padSide: left
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-005
+    description: "Beneficiary sort code must be a valid/recognized bank sort code"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: sort-code-lookup
+    parameters:
+      fieldName: beneficiarySortCode
+      lookupSource: EISCD
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-006
+    description: "Beneficiary name is mandatory"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: mandatory-field
+    parameters:
+      fieldName: beneficiaryName
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-007
+    description: "Beneficiary name must not exceed 18 chars"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: max-length
+    parameters:
+      fieldName: beneficiaryName
+      maxLength: 18
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-008
+    description: "Beneficiary name must use valid character set"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-INVALID-CHARS
+    evaluator: charset-validation
+    parameters:
+      fieldName: beneficiaryName
+      validPattern: "^[A-Za-z0-9 &\\-/\\.]+$"
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-009
+    description: "Beneficiary reference (if provided) must not exceed 18 chars"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: max-length
+    parameters:
+      fieldName: beneficiaryReference
+      maxLength: 18
+      optional: true
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-010
+    description: "Beneficiary reference (if provided) must not be empty"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: non-empty-if-present
+    parameters:
+      fieldName: beneficiaryReference
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  - ruleId: VR-BEN-011
+    description: "Beneficiary reference must use valid character set"
+    category: BEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-STRIP-INVALID-CHARS
+    evaluator: charset-validation
+    parameters:
+      fieldName: beneficiaryReference
+      validPattern: "^[A-Za-z0-9 &\\-/\\.]+$"
+      optional: true
+    phase: FIELD_LEVEL
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.8  XML-Specific Rules (VR-XML)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-XML-001
+    description: "MsgId must be 'COMMERCIAL BANKING ONLINE' (case-insensitive fallback)"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-FIXED-VALUE
+    evaluator: fixed-value
+    parameters:
+      tagPath: "GrpHdr/MsgId"
+      expectedValue: "COMMERCIAL BANKING ONLINE"
+      caseSensitive: false
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-002
+    description: "PmtMtd must be 'TRA'"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-FIXED-VALUE
+    evaluator: fixed-value
+    parameters:
+      tagPath: "PmtInf/PmtMtd"
+      expectedValue: "TRA"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-003
+    description: "Prtry (under LclInstrm) must be 'UKBACS'"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-FIXED-VALUE
+    evaluator: fixed-value
+    parameters:
+      tagPath: "PmtInf/PmtTpInf/LclInstrm/Prtry"
+      expectedValue: "UKBACS"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-004
+    description: "NbOfTxs must be numeric, max 15 chars"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-AUTO-COUNT
+    evaluator: numeric-field
+    parameters:
+      tagPath: "GrpHdr/NbOfTxs"
+      maxLength: 15
+      autoCalculate: true
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-005
+    description: "InitgPty must be empty self-closing element"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-EMPTY-ELEMENT
+    evaluator: empty-element
+    parameters:
+      tagPath: "GrpHdr/InitgPty"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-006
+    description: "Dbtr must be empty self-closing element"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-EMPTY-ELEMENT
+    evaluator: empty-element
+    parameters:
+      tagPath: "PmtInf/Dbtr"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-007
+    description: "FinInstnId (under DbtrAgt) must be empty self-closing"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-EMPTY-ELEMENT
+    evaluator: empty-element
+    parameters:
+      tagPath: "PmtInf/DbtrAgt/FinInstnId"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-008
+    description: "PmtInfId is mandatory, max 35 chars"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-AUTO-COUNT
+    evaluator: mandatory-field
+    parameters:
+      tagPath: "PmtInf/PmtInfId"
+      maxLength: 35
+      autoGenerate: true
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-009
+    description: "EndToEndId is mandatory, max 31 chars"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: prompt
+    evaluator: mandatory-field
+    parameters:
+      tagPath: "CdtTrfTxInf/PmtId/EndToEndId"
+      maxLength: 31
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-010
+    description: "When Debit Account Ref omitted, CtgyPurp+Prtry subtree must be absent"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-PRUNE-SUBTREE
+    evaluator: conditional-subtree
+    parameters:
+      conditionField: debitAccountRef
+      conditionAbsent: true
+      subtreePath: "PmtInf/PmtTpInf/CtgyPurp"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-011
+    description: "When Beneficiary Ref omitted, RmtInf subtree must be absent"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-PRUNE-SUBTREE
+    evaluator: conditional-subtree
+    parameters:
+      conditionField: beneficiaryReference
+      conditionAbsent: true
+      subtreePath: "CdtTrfTxInf/RmtInf"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-XML-012
+    description: "Optional fields, if present, must not be empty"
+    category: XML
+    appliesTo: [XML]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-XML-PRUNE-SUBTREE
+    evaluator: non-empty-if-present
+    parameters:
+      scope: all-optional-tags
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.9  Fixed-Length Rules (VR-FLT)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-FLT-001
+    description: "All records must be the same fixed length"
+    category: FLT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: false
+    evaluator: fixed-length-consistency
+    parameters: {}
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FLT-002
+    description: "Amount field must be zero-padded integer (pence)"
+    category: FLT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-PENCE-TO-POUNDS
+    evaluator: pence-format
+    parameters:
+      fieldPosition: "29-39"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FLT-003
+    description: "Space-padded fields must be trimmed before content validation"
+    category: FLT
+    appliesTo: [FLT]
+    severity: WARN
+    autoFixable: true
+    transformId: TF-TRIM
+    evaluator: space-padding
+    parameters: {}
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FLT-004
+    description: "Date field (pos 71-78) must be valid YYYYMMDD"
+    category: FLT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: false
+    evaluator: date-format
+    parameters:
+      fieldPosition: "71-78"
+      expectedFormat: "yyyyMMdd"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FLT-005
+    description: "Sort code fields (pos 1-6, 15-20) must be exactly 6 digits"
+    category: FLT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: false
+    evaluator: exact-length
+    parameters:
+      fieldPositions: ["1-6", "15-20"]
+      exactLength: 6
+      pattern: "^\\d{6}$"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-FLT-006
+    description: "Account number fields (pos 7-14, 21-28) must be exactly 8 digits"
+    category: FLT
+    appliesTo: [FLT]
+    severity: ERROR
+    autoFixable: false
+    evaluator: exact-length
+    parameters:
+      fieldPositions: ["7-14", "21-28"]
+      exactLength: 8
+      pattern: "^\\d{8}$"
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.10  ERP-Export Rules (VR-ERP)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-ERP-001
+    description: "Header row must be detected and excluded from payment data"
+    category: ERP
+    appliesTo: [ERP]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-SKIP-HEADER-ROW
+    evaluator: header-row-presence
+    parameters: {}
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-ERP-002
+    description: "Non-payment columns must be identified and excluded"
+    category: ERP
+    appliesTo: [ERP]
+    severity: WARN
+    autoFixable: true
+    transformId: TF-SKIP-COLUMNS
+    evaluator: column-relevance
+    parameters:
+      requiredTargetFields: ["amount", "beneficiaryAccountNumber", "beneficiarySortCode", "beneficiaryName"]
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-ERP-003
+    description: "All mandatory BACS target fields must be mappable or user-supplied"
+    category: ERP
+    appliesTo: [ERP]
+    severity: ERROR
+    autoFixable: prompt
+    evaluator: field-coverage
+    parameters:
+      mandatoryFields: ["debitSortCode", "debitAccountNumber", "beneficiarySortCode", "beneficiaryAccountNumber", "beneficiaryName", "amount", "valueDate"]
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-ERP-004
+    description: "Date format must be recognized and converted to CBO target format"
+    category: ERP
+    appliesTo: [ERP]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-DATE-REFORMAT
+    evaluator: date-format-detection
+    parameters:
+      knownPatterns: ["yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy", "dd.MM.yyyy", "yyyyMMdd", "dd-MMM-yyyy"]
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  - ruleId: VR-ERP-005
+    description: "Currency column (if present) must match expected currency (GBP)"
+    category: ERP
+    appliesTo: [ERP]
+    severity: WARN
+    autoFixable: false
+    evaluator: currency-check
+    parameters:
+      expectedCurrency: GBP
+    phase: FORMAT_SPECIFIC
+    enabled: true
+    version: 1
+
+  # ---------------------------------------------------------------------------
+  # E.11  Cross-Cutting / General Rules (VR-GEN)
+  # ---------------------------------------------------------------------------
+
+  - ruleId: VR-GEN-001
+    description: "No field may contain leading/trailing whitespace after extraction"
+    category: GEN
+    appliesTo: [ALL]
+    severity: WARN
+    autoFixable: true
+    transformId: TF-TRIM
+    evaluator: whitespace-check
+    parameters:
+      scope: all-fields
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1
+
+  - ruleId: VR-GEN-002
+    description: "Sort code leading zeros must be preserved"
+    category: GEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-LEADING-ZERO-PAD
+    evaluator: leading-zero
+    parameters:
+      fieldName: sortCode
+      targetLength: 6
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1
+
+  - ruleId: VR-GEN-003
+    description: "Account number leading zeros must be preserved"
+    category: GEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: true
+    transformId: TF-LEADING-ZERO-PAD
+    evaluator: leading-zero
+    parameters:
+      fieldName: accountNumber
+      targetLength: 8
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1
+
+  - ruleId: VR-GEN-004
+    description: "All mandatory fields must be present and non-empty after mapping"
+    category: GEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: prompt
+    evaluator: mandatory-field-coverage
+    parameters:
+      mandatoryFields: ["debitSortCode", "debitAccountNumber", "beneficiarySortCode", "beneficiaryAccountNumber", "beneficiaryName", "amount", "valueDate"]
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1
+
+  - ruleId: VR-GEN-005
+    description: "Character encoding must not produce garbled chars"
+    category: GEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: encoding-integrity
+    parameters: {}
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1
+
+  - ruleId: VR-GEN-006
+    description: "User/tenant must have sufficient entitlements for payment type"
+    category: GEN
+    appliesTo: [ALL]
+    severity: ERROR
+    autoFixable: false
+    evaluator: entitlement-check
+    parameters: {}
+    phase: CROSS_CUTTING
+    enabled: true
+    version: 1

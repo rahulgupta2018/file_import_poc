@@ -1,0 +1,47 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# SQLite
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Storage (uploaded files)
+data/storage/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+.env.production

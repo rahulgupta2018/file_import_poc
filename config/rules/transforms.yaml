@@ -1,0 +1,274 @@
+# =============================================================================
+# Transform Definitions Configuration
+# =============================================================================
+# All 22 deterministic auto-fix transforms are declared here as data.
+# The AutoFixEngine loads this file at startup via TransformRegistry.
+#
+# Adding / removing / modifying a transform requires ONLY a YAML change + restart.
+# No Java code changes are needed unless a brand-new transformer type is required.
+#
+# Schema:
+#   transformId   — Unique ID (TF-{NAME})
+#   description   — Human-readable explanation shown in UI and audit log
+#   transformer   — Transformer class key (resolved via TransformerFactory — Strategy pattern)
+#   parameters    — Transformer-specific params
+#   applicableRules — Rule IDs this transform is linked to
+#   enabled       — true | false
+#   version       — Transform version for audit trail
+#   idempotent    — Whether applying twice produces same result (should always be true)
+# =============================================================================
+
+version: "1.0"
+lastUpdated: "2026-02-26"
+
+transforms:
+
+  - transformId: TF-TRIM
+    description: "Trim leading/trailing whitespace"
+    transformer: trim
+    parameters: {}
+    applicableRules: [VR-GEN-001, VR-FLT-003]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-DATE-REFORMAT
+    description: "Convert between known date formats (DD.MM.YY to YYYYMMDD, etc.)"
+    transformer: date-reformat
+    parameters:
+      targetFormats:
+        CSV: "yyyyMMdd"
+        XML: "yyyy-MM-dd"
+      knownSourceFormats:
+        - "yyyy-MM-dd"
+        - "dd/MM/yyyy"
+        - "dd.MM.yyyy"
+        - "MM/dd/yyyy"
+        - "yyyyMMdd"
+        - "dd-MMM-yyyy"
+    applicableRules: [VR-DATE-001, VR-DATE-002, VR-DATE-003, VR-DATE-004, VR-DATE-006, VR-ERP-004]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-YEAR-WINDOW
+    description: "Expand 2-digit year (00-49 to 2000-2049, 50-99 to 1950-1999)"
+    transformer: year-window
+    parameters:
+      pivotYear: 49
+      lowCentury: 2000
+      highCentury: 1900
+    applicableRules: [VR-DATE-006]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-STRIP-COMMA
+    description: "Remove commas from numeric amounts"
+    transformer: strip-chars
+    parameters:
+      charsToRemove: [","]
+    applicableRules: [VR-AMT-004]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-STRIP-SYMBOL
+    description: "Remove currency symbols"
+    transformer: strip-chars
+    parameters:
+      charsToRemove: ["£", "$", "€", "¥"]
+    applicableRules: [VR-AMT-005]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-PENCE-TO-POUNDS
+    description: "Divide integer pence by 100, format as decimal"
+    transformer: numeric-conversion
+    parameters:
+      divisor: 100
+      decimalPlaces: 2
+    applicableRules: [VR-AMT-006, VR-FLT-002]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-ADD-DECIMAL
+    description: "Append .00 to whole-number amounts"
+    transformer: append-decimal
+    parameters:
+      decimalPlaces: 2
+      suffix: ".00"
+    applicableRules: [VR-AMT-002]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-LEADING-ZERO-PAD
+    description: "Left-pad sort codes (6) and account numbers (8) with zeros"
+    transformer: left-pad
+    parameters:
+      padChar: "0"
+      targetLengths:
+        sortCode: 6
+        accountNumber: 8
+    applicableRules: [VR-GEN-002, VR-GEN-003, VR-BEN-002, VR-BEN-004, VR-DBT-003, VR-DBT-004]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-STRIP-DASH
+    description: "Remove dashes from sort codes"
+    transformer: strip-chars
+    parameters:
+      charsToRemove: ["-"]
+    applicableRules: [VR-BEN-004]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-DEBIT-COMPOSITE
+    description: "Merge sort code + account into SSSSSS-AAAAAAAA format"
+    transformer: composite-format
+    parameters:
+      parts: ["sortCode", "accountNumber"]
+      separator: "-"
+      padLengths: [6, 8]
+      padChar: "0"
+    applicableRules: [VR-DBT-002]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-XML-FIXED-VALUE
+    description: "Set MsgId, PmtMtd, Prtry to required constants"
+    transformer: xml-set-value
+    parameters:
+      fixedValues:
+        "GrpHdr/MsgId": "COMMERCIAL BANKING ONLINE"
+        "PmtInf/PmtMtd": "TRA"
+        "PmtInf/PmtTpInf/LclInstrm/Prtry": "UKBACS"
+    applicableRules: [VR-XML-001, VR-XML-002, VR-XML-003]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-XML-EMPTY-ELEMENT
+    description: "Replace populated InitgPty/Dbtr/FinInstnId with self-closing empty tags"
+    transformer: xml-empty-element
+    parameters:
+      tagPaths:
+        - "GrpHdr/InitgPty"
+        - "PmtInf/Dbtr"
+        - "PmtInf/DbtrAgt/FinInstnId"
+    applicableRules: [VR-XML-005, VR-XML-006, VR-XML-007]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-XML-PRUNE-SUBTREE
+    description: "Remove parent subtree when optional child is omitted"
+    transformer: xml-prune
+    parameters: {}
+    applicableRules: [VR-XML-010, VR-XML-011, VR-XML-012]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-XML-AUTO-COUNT
+    description: "Recalculate NbOfTxs from transaction count"
+    transformer: xml-auto-count
+    parameters:
+      targetTag: "GrpHdr/NbOfTxs"
+      countTag: "CdtTrfTxInf"
+    applicableRules: [VR-XML-004, VR-XML-008]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-STRIP-BOM
+    description: "Remove UTF-8 BOM prefix"
+    transformer: strip-bom
+    parameters:
+      bomBytes: [0xEF, 0xBB, 0xBF]
+    applicableRules: [VR-FILE-004]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-XML-STANDALONE
+    description: "Replace standalone='true' with standalone='yes'"
+    transformer: xml-declaration-fix
+    parameters:
+      attribute: standalone
+      invalidValues: ["true"]
+      correctValue: "yes"
+    applicableRules: [VR-FILE-005]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-STRIP-INVALID-CHARS
+    description: "Remove characters outside the valid BACS character set"
+    transformer: charset-filter
+    parameters:
+      validPattern: "^[A-Za-z0-9 &\\-/\\.]+$"
+      replacementChar: ""
+    applicableRules: [VR-BEN-008, VR-BEN-011]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-CURRENCY-ATTR
+    description: "Set XML Ccy attribute to ISO 4217 code (default GBP)"
+    transformer: xml-set-attribute
+    parameters:
+      tagPath: "InstdAmt"
+      attribute: "Ccy"
+      defaultValue: "GBP"
+    applicableRules: [VR-AMT-007, VR-AMT-008]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-CLEAR-RESERVED
+    description: "Clear contents of reserved columns (e.g., D:E)"
+    transformer: clear-field
+    parameters:
+      replaceWith: ""
+    applicableRules: [VR-DBT-008]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-SKIP-HEADER-ROW
+    description: "Exclude header row from payment data extraction"
+    transformer: skip-rows
+    parameters:
+      skipRows: [0]
+      reason: "header"
+    applicableRules: [VR-ERP-001]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-SKIP-COLUMNS
+    description: "Exclude non-payment columns from mapping"
+    transformer: skip-columns
+    parameters: {}
+    applicableRules: [VR-ERP-002]
+    enabled: true
+    idempotent: true
+    version: 1
+
+  - transformId: TF-SEQ-INCREMENT
+    description: "Auto-increment header sequence number to next available unique value within 24-hour window (Pain Point #4)"
+    transformer: sequence-increment
+    parameters:
+      lookbackWindow: "24h"
+      startOffset: 1
+    applicableRules: [VR-HT-001]
+    enabled: true
+    idempotent: true
+    version: 1

@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment File Import — Clickable Prototype</title>
+  <!-- Tailwind CSS Play CDN — local copy for offline / corporate-network use -->
+  <script src="tailwindcss.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lloyds: { green: '#006a4d', dark: '#004833', light: '#e6f2ee', accent: '#00a36c' },
+            status: {
+              created: '#6366f1', parsing: '#8b5cf6', proposing: '#a855f7',
+              validating: '#f59e0b', fixing: '#f97316', awaiting: '#ef4444',
+              approved: '#10b981', published: '#059669', completed: '#047857', failed: '#dc2626'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .nav-link.active { border-bottom: 3px solid #006a4d; color: #006a4d; font-weight: 600; }
+    .drop-zone.dragover { border-color: #006a4d; background: #e6f2ee; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .confidence-high { background: #dcfce7; color: #166534; }
+    .confidence-medium { background: #fef9c3; color: #854d0e; }
+    .confidence-low { background: #fee2e2; color: #991b1b; }
+    .status-pill { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 10px; border-radius: 9999px; }
+    .pipeline-step { transition: all 0.3s ease; }
+    .pipeline-step.done { background: #006a4d; color: white; }
+    .pipeline-step.current { background: #f59e0b; color: white; animation: pulse 2s infinite; }
+    .pipeline-step.pending { background: #e5e7eb; color: #9ca3af; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.7} }
+    .modal-backdrop { background: rgba(0,0,0,0.5); }
+    .tooltip { position: relative; }
+    .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; z-index: 50; }
+    tr.clickable-row:hover { background-color: #f0fdf4; cursor: pointer; }
+    .tab-btn.active { background: #006a4d; color: white; }
+    .tab-btn { transition: all 0.15s ease; }
+    .diff-add { background: #dcfce7; }
+    .diff-remove { background: #fee2e2; text-decoration: line-through; }
+  </style>
+</head>
+<body class="h-full">
+
+<!-- ============================================================ -->
+<!-- HEADER / NAV BAR                                              -->
+<!-- ============================================================ -->
+<header class="bg-lloyds-green shadow-lg sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="navigate('dashboard')">
+        <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-lloyds-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <span class="text-white font-semibold text-lg">Payment File Import</span>
+          <span class="text-green-200 text-xs ml-2">v1.0</span>
+        </div>
+      </div>
+      <!-- Nav -->
+      <nav class="flex items-center gap-1" id="main-nav">
+        <button class="nav-link px-4 py-5 text-sm text-green-100 hover:text-white transition" data-screen="dashboard" onclick="navigate('dashboard')">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            Dashboard
+          </span>
+        </button>
+        <button class="nav-link px-4 py-5 text-sm text-green-100 hover:text-white transition" data-screen="upload" onclick="navigate('upload')">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            Upload
+          </span>
+        </button>
+        <button class="nav-link px-4 py-5 text-sm text-green-100 hover:text-white transition" data-screen="maps" onclick="navigate('maps')">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Maps Registry
+          </span>
+        </button>
+      </nav>
+      <!-- User -->
+      <div class="flex items-center gap-3">
+        <span class="text-green-200 text-xs">Tenant: <strong class="text-white">lloyds-cbo-uk</strong></span>
+        <div class="w-8 h-8 bg-green-800 rounded-full flex items-center justify-center text-white text-sm font-medium">RG</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: DASHBOARD                                           -->
+<!-- ============================================================ -->
+<section id="screen-dashboard" class="screen active fade-in">
+  <!-- Summary cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-sm text-gray-500 mb-1">Total Imports</div>
+      <div class="text-3xl font-bold text-gray-900">47</div>
+      <div class="text-xs text-green-600 mt-1">↑ 12 this week</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-sm text-gray-500 mb-1">Completed</div>
+      <div class="text-3xl font-bold text-green-700">38</div>
+      <div class="text-xs text-gray-400 mt-1">80.9% success rate</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-sm text-gray-500 mb-1">In Progress</div>
+      <div class="text-3xl font-bold text-amber-600">6</div>
+      <div class="text-xs text-gray-400 mt-1">3 awaiting input</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-sm text-gray-500 mb-1">Failed</div>
+      <div class="text-3xl font-bold text-red-600">3</div>
+      <div class="text-xs text-gray-400 mt-1">2 retryable</div>
+    </div>
+  </div>
+
+  <!-- System Learning Banner -->
+  <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🧠</span>
+        <div>
+          <h3 class="font-semibold text-purple-800 text-sm">System Learning</h3>
+          <p class="text-xs text-purple-600 mt-0.5">The system has learned from <strong>38 successful imports</strong> and remembers <strong>5 mapping corrections</strong> you made. Mapping accuracy has improved from 74% → 92%.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-purple-600">
+        <div class="text-center"><div class="text-lg font-bold text-purple-700">4</div><div>Maps Saved</div></div>
+        <div class="text-center"><div class="text-lg font-bold text-purple-700">5</div><div>Corrections Remembered</div></div>
+        <div class="text-center"><div class="text-lg font-bold text-purple-700">92%</div><div>Accuracy</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl shadow-sm border mb-4">
+    <div class="px-5 py-4 flex items-center justify-between border-b">
+      <h2 class="text-lg font-semibold text-gray-900">Import History</h2>
+      <div class="flex items-center gap-3">
+        <select class="text-sm border rounded-lg px-3 py-1.5 text-gray-600 focus:ring-2 focus:ring-lloyds-green focus:border-transparent">
+          <option>All Statuses</option>
+          <option>Completed</option>
+          <option>In Progress</option>
+          <option>Awaiting Input</option>
+          <option>Failed</option>
+        </select>
+        <select class="text-sm border rounded-lg px-3 py-1.5 text-gray-600 focus:ring-2 focus:ring-lloyds-green focus:border-transparent">
+          <option>All Source Types</option>
+          <option>CBO CSV</option>
+          <option>BACS XML</option>
+          <option>Standard 18</option>
+          <option>ERP CSV</option>
+        </select>
+        <div class="relative">
+          <input type="text" placeholder="Search files..." class="text-sm border rounded-lg pl-8 pr-3 py-1.5 w-48 focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+          <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <button onclick="navigate('upload')" class="bg-lloyds-green text-white px-4 py-1.5 text-sm rounded-lg hover:bg-lloyds-dark transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Import
+        </button>
+      </div>
+    </div>
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-5 py-3 font-medium text-gray-500">Import ID</th>
+            <th class="px-5 py-3 font-medium text-gray-500">File Name</th>
+            <th class="px-5 py-3 font-medium text-gray-500">Source Type</th>
+            <th class="px-5 py-3 font-medium text-gray-500">Entries</th>
+            <th class="px-5 py-3 font-medium text-gray-500">Status</th>
+            <th class="px-5 py-3 font-medium text-gray-500">Map Reuse</th>
+            <th class="px-5 py-3 font-medium text-gray-500">Created</th>
+            <th class="px-5 py-3 font-medium text-gray-500"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y" id="import-table-body">
+          <!-- Row 1 -->
+          <tr class="clickable-row" onclick="navigate('detail', 'a3f1b2c4')">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">a3f1b2c4</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">supplier_payments_feb_2026.csv</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">📄 ERP CSV</span></td>
+            <td class="px-5 py-3 text-gray-600">156</td>
+            <td class="px-5 py-3"><span class="status-pill bg-amber-100 text-amber-700">Awaiting Input</span></td>
+            <td class="px-5 py-3"><span class="text-xs text-gray-400">—</span></td>
+            <td class="px-5 py-3 text-gray-500">26 Feb 2026, 09:14</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 2 -->
+          <tr class="clickable-row" onclick="navigate('detail', 'b7e2d9a1')">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">b7e2d9a1</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">BACS_payroll_run_042.xml</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">📑 BACS XML</span></td>
+            <td class="px-5 py-3 text-gray-600">89</td>
+            <td class="px-5 py-3"><span class="status-pill bg-amber-100 text-amber-700">Validating</span></td>
+            <td class="px-5 py-3"><span class="text-xs text-gray-400">—</span></td>
+            <td class="px-5 py-3 text-gray-500">26 Feb 2026, 08:42</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 3 -->
+          <tr class="clickable-row" onclick="navigate('detail', 'c9d4e8f2')">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">c9d4e8f2</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">CBO_bulk_payments_jan.csv</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">📊 CBO CSV</span></td>
+            <td class="px-5 py-3 text-gray-600">312</td>
+            <td class="px-5 py-3"><span class="status-pill bg-green-100 text-green-700">Completed</span></td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600">♻️ Reused</span></td>
+            <td class="px-5 py-3 text-gray-500">25 Feb 2026, 16:30</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 4 -->
+          <tr class="clickable-row" onclick="navigate('detail', 'd2a5c7b3')">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">d2a5c7b3</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">fixed_length_payroll.txt</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">📃 Standard 18</span></td>
+            <td class="px-5 py-3 text-gray-600">45</td>
+            <td class="px-5 py-3"><span class="status-pill bg-green-100 text-green-700">Published</span></td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs text-blue-600">🆕 New Map</span></td>
+            <td class="px-5 py-3 text-gray-500">25 Feb 2026, 14:15</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 5 -->
+          <tr class="clickable-row">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">e8f3a1d6</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">vendor_pay_q4_2025.csv</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">📄 ERP CSV</span></td>
+            <td class="px-5 py-3 text-gray-600">78</td>
+            <td class="px-5 py-3"><span class="status-pill bg-red-100 text-red-700">Failed</span></td>
+            <td class="px-5 py-3"><span class="text-xs text-gray-400">—</span></td>
+            <td class="px-5 py-3 text-gray-500">24 Feb 2026, 11:22</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 6 -->
+          <tr class="clickable-row">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">f1b9c2e7</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">CBO_monthly_standing_orders.csv</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">📊 CBO CSV</span></td>
+            <td class="px-5 py-3 text-gray-600">204</td>
+            <td class="px-5 py-3"><span class="status-pill bg-green-100 text-green-700">Completed</span></td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600">♻️ Reused</span></td>
+            <td class="px-5 py-3 text-gray-500">24 Feb 2026, 09:05</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+          <!-- Row 7 -->
+          <tr class="clickable-row">
+            <td class="px-5 py-3"><code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">g4h8j2k5</code></td>
+            <td class="px-5 py-3 font-medium text-gray-900">payroll_BACS_jan_2026.xml</td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">📑 BACS XML</span></td>
+            <td class="px-5 py-3 text-gray-600">67</td>
+            <td class="px-5 py-3"><span class="status-pill bg-green-100 text-green-700">Completed</span></td>
+            <td class="px-5 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600">♻️ Reused</span></td>
+            <td class="px-5 py-3 text-gray-500">23 Feb 2026, 15:48</td>
+            <td class="px-5 py-3"><svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
+    <div class="px-5 py-3 flex items-center justify-between border-t text-sm text-gray-500">
+      <span>Showing 1-7 of 47 imports</span>
+      <div class="flex items-center gap-2">
+        <button class="px-3 py-1 border rounded-lg text-gray-400 cursor-not-allowed">← Previous</button>
+        <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-gray-700">Next →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 2: UPLOAD                                              -->
+<!-- ============================================================ -->
+<section id="screen-upload" class="screen fade-in">
+  <div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Upload Payment File</h1>
+      <p class="text-gray-500 mt-1">Drag & drop or browse to upload a payment file for automated mapping and validation.</p>
+    </div>
+
+    <!-- Drop zone -->
+    <div id="drop-zone" class="drop-zone bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-300 p-12 text-center cursor-pointer hover:border-lloyds-green transition"
+         onclick="simulateFileSelect()" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault(); this.classList.remove('dragover'); simulateFileSelect()">
+      <div id="drop-zone-empty">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <p class="text-gray-600 font-medium mb-1">Drop your payment file here</p>
+        <p class="text-gray-400 text-sm mb-4">or click to browse</p>
+        <div class="flex items-center justify-center gap-3 text-xs text-gray-400">
+          <span class="px-2 py-1 bg-gray-50 rounded">BACS XML</span>
+          <span class="px-2 py-1 bg-gray-50 rounded">CBO CSV</span>
+          <span class="px-2 py-1 bg-gray-50 rounded">Standard 18</span>
+          <span class="px-2 py-1 bg-gray-50 rounded">ERP CSV</span>
+        </div>
+      </div>
+      <div id="drop-zone-selected" class="hidden">
+        <svg class="w-12 h-12 text-lloyds-green mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="font-medium text-gray-900" id="selected-file-name">supplier_payments_feb_2026.csv</p>
+        <p class="text-sm text-gray-400 mt-1" id="selected-file-size">245.6 KB · CSV</p>
+        <button class="mt-3 text-xs text-red-500 hover:underline" onclick="event.stopPropagation(); clearFile()">Remove</button>
+      </div>
+    </div>
+
+    <!-- Reuse recommendation (appears after file select) -->
+    <div id="reuse-hint" class="hidden mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 fade-in">
+      <div class="flex items-start gap-3">
+        <span class="text-blue-500 text-xl">💡</span>
+        <div>
+          <p class="text-sm font-medium text-blue-800">Reusable Map Detected</p>
+          <p class="text-sm text-blue-600 mt-0.5">A previously published map <strong>"ERP-Supplier-Payments-v3"</strong> matches this file structure (92% fingerprint similarity). The system will attempt to reuse it.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload button -->
+    <div class="mt-6 flex items-center justify-between">
+      <button onclick="navigate('dashboard')" class="text-sm text-gray-500 hover:text-gray-700">← Back to Dashboard</button>
+      <button id="upload-btn" class="bg-lloyds-green text-white px-6 py-2.5 rounded-lg hover:bg-lloyds-dark transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" disabled onclick="simulateUpload()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Upload &amp; Process
+      </button>
+    </div>
+
+    <!-- Uploading progress (hidden by default) -->
+    <div id="upload-progress" class="hidden mt-6 bg-white rounded-xl shadow-sm border p-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="animate-spin w-5 h-5 border-2 border-lloyds-green border-t-transparent rounded-full"></div>
+        <span class="font-medium text-gray-700">Uploading & processing…</span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        <div class="bg-lloyds-green h-2 rounded-full transition-all duration-1000" style="width: 0%" id="progress-bar"></div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Detecting file type → Reading data → Identifying columns → Matching to payment fields…</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 3: IMPORT DETAIL                                       -->
+<!-- ============================================================ -->
+<section id="screen-detail" class="screen fade-in">
+  <!-- Breadcrumb -->
+  <nav class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+    <a href="#" onclick="navigate('dashboard')" class="hover:text-lloyds-green">Dashboard</a>
+    <span>›</span>
+    <span class="text-gray-700 font-medium">Import a3f1b2c4</span>
+  </nav>
+
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+        supplier_payments_feb_2026.csv
+        <span class="status-pill bg-amber-100 text-amber-700">Awaiting Input</span>
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">Import ID: <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">a3f1b2c4-e5d6-7f8a-9b0c-1d2e3f4a5b6c</code> · Uploaded 26 Feb 2026, 09:14 AM</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="navigate('dashboard')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">← Back</button>
+      <button class="px-4 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100">Cancel Import</button>
+    </div>
+  </div>
+
+  <!-- Pipeline Progress -->
+  <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4">Pipeline Progress</h3>
+    <div class="flex items-center gap-0">
+      <div class="pipeline-step done flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-xs font-medium">Upload</span>
+      </div>
+      <div class="h-0.5 w-8 bg-lloyds-green"></div>
+      <div class="pipeline-step done flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-xs font-medium">Read File</span>
+      </div>
+      <div class="h-0.5 w-8 bg-lloyds-green"></div>
+      <div class="pipeline-step done flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-xs font-medium">Match Fields</span>
+      </div>
+      <div class="h-0.5 w-8 bg-lloyds-green"></div>
+      <div class="pipeline-step done flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-xs font-medium">Validate</span>
+      </div>
+      <div class="h-0.5 w-8 bg-amber-400"></div>
+      <div class="pipeline-step current flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs font-medium">Your Input</span>
+      </div>
+      <div class="h-0.5 w-8 bg-gray-200"></div>
+      <div class="pipeline-step pending flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs font-medium">Approve</span>
+      </div>
+      <div class="h-0.5 w-8 bg-gray-200"></div>
+      <div class="pipeline-step pending flex flex-col items-center px-4 py-3 rounded-lg text-center min-w-[100px]">
+        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-xs font-medium">Publish</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Source Type</div>
+      <div class="text-lg font-semibold text-gray-900">ERP CSV</div>
+      <div class="text-xs text-gray-400">Auto-detected</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Payment Entries</div>
+      <div class="text-lg font-semibold text-gray-900">156</div>
+      <div class="text-xs text-gray-400">12 columns detected</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Validation</div>
+      <div class="text-lg font-semibold text-amber-600">4 errors · 8 warnings</div>
+      <div class="text-xs text-gray-400">6 auto-fixable</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border p-5">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Map Confidence</div>
+      <div class="text-lg font-semibold text-green-700">87%</div>
+      <div class="text-xs text-gray-400">10/12 fields high confidence</div>
+    </div>
+  </div>
+
+  <!-- Missing fields alert -->
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
+    <div class="flex items-start gap-3">
+      <span class="text-amber-500 text-2xl">⚠️</span>
+      <div class="flex-1">
+        <h3 class="font-semibold text-amber-800">Action Required: Missing Mandatory Fields</h3>
+        <p class="text-sm text-amber-700 mt-1">This ERP CSV file is missing 2 mandatory BACS fields that must be provided before the import can proceed.</p>
+        <button onclick="showModal('missing-fields-modal')" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition">
+          Provide Missing Fields →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <button onclick="navigate('mapping')" class="bg-white rounded-xl shadow-sm border p-5 hover:border-lloyds-green hover:shadow-md transition text-left group">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-lloyds-light rounded-lg flex items-center justify-center group-hover:bg-lloyds-green transition">
+          <svg class="w-5 h-5 text-lloyds-green group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-900">Review Mapping</div>
+          <div class="text-xs text-gray-500">View auto-map proposal with match quality</div>
+        </div>
+      </div>
+    </button>
+    <button onclick="navigate('validation')" class="bg-white rounded-xl shadow-sm border p-5 hover:border-lloyds-green hover:shadow-md transition text-left group">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-lloyds-light rounded-lg flex items-center justify-center group-hover:bg-lloyds-green transition">
+          <svg class="w-5 h-5 text-lloyds-green group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-900">View Validation</div>
+          <div class="text-xs text-gray-500">4 errors, 8 warnings — 6 auto-fixable</div>
+        </div>
+      </div>
+    </button>
+    <button class="bg-white rounded-xl shadow-sm border p-5 hover:border-gray-300 transition text-left opacity-50 cursor-not-allowed">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-400">Download Output</div>
+          <div class="text-xs text-gray-400">Available after publish</div>
+        </div>
+      </div>
+    </button>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 4: MAPPING REVIEW                                      -->
+<!-- ============================================================ -->
+<section id="screen-mapping" class="screen fade-in">
+  <nav class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+    <a href="#" onclick="navigate('dashboard')" class="hover:text-lloyds-green">Dashboard</a><span>›</span>
+    <a href="#" onclick="navigate('detail','a3f1b2c4')" class="hover:text-lloyds-green">Import a3f1b2c4</a><span>›</span>
+    <span class="text-gray-700 font-medium">Mapping Review</span>
+  </nav>
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Auto-Map Proposal</h1>
+      <p class="text-sm text-gray-500 mt-1">We've automatically matched your file columns to the required BACS payment fields. Review and adjust anything that looks wrong.</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="navigate('detail','a3f1b2c4')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">← Back</button>
+      <button class="px-4 py-2 text-sm bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition">Accept All Mappings</button>
+    </div>
+  </div>
+
+  <!-- Self-Learning Banner -->
+  <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
+    <div class="flex items-start gap-3">
+      <span class="text-2xl">🧠</span>
+      <div class="flex-1">
+        <h3 class="font-semibold text-purple-800 text-sm">Smart Mapping — Learning from Your History</h3>
+        <p class="text-xs text-purple-700 mt-1">This proposal was built using patterns learned from <strong>38 successful imports</strong>. The system remembers your corrections — mappings you fixed before won’t need fixing again.</p>
+        <div class="flex items-center gap-4 mt-2 text-xs text-purple-600">
+          <span>✅ 14 mappings confirmed by past imports</span>
+          <span>🔄 2 corrections remembered from your edits</span>
+          <span>📊 92% accuracy (up from 74% on your first import)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confidence summary -->
+  <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+      <div class="text-3xl font-bold text-green-700">10</div>
+      <div class="text-sm text-green-600">Good Match</div>
+      <div class="text-xs text-green-500 mt-1">Very likely correct</div>
+    </div>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+      <div class="text-3xl font-bold text-yellow-700">1</div>
+      <div class="text-sm text-yellow-600">Needs Review</div>
+      <div class="text-xs text-yellow-500 mt-1">Please check this one</div>
+    </div>
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+      <div class="text-3xl font-bold text-red-700">1</div>
+      <div class="text-sm text-red-600">Uncertain Match</div>
+      <div class="text-xs text-red-500 mt-1">May need to change this</div>
+    </div>
+  </div>
+
+  <!-- Mapping Table -->
+  <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between border-b bg-gray-50">
+      <h3 class="font-semibold text-gray-700 text-sm">Field Mappings (12 fields)</h3>
+      <div class="flex items-center gap-3 text-xs text-gray-500">
+        <label class="flex items-center gap-1"><input type="checkbox" checked class="rounded text-lloyds-green"> Show skipped columns</label>
+        <label class="flex items-center gap-1"><input type="checkbox" class="rounded text-lloyds-green"> Show what will change</label>
+      </div>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left border-b">
+        <tr>
+          <th class="px-5 py-3 font-medium text-gray-500 w-8">#</th>
+          <th class="px-5 py-3 font-medium text-gray-500">Your File Column</th>
+          <th class="px-5 py-3 font-medium text-gray-500 text-center w-16">→</th>
+          <th class="px-5 py-3 font-medium text-gray-500">BACS Payment Field</th>
+          <th class="px-5 py-3 font-medium text-gray-500">Match Quality</th>
+          <th class="px-5 py-3 font-medium text-gray-500">What will change</th>
+          <th class="px-5 py-3 font-medium text-gray-500 text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">1</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Supplier Name</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Beneficiary Name</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span> <span class="text-xs text-purple-500 ml-1" title="This mapping was confirmed correct in 14 previous imports">🧠 Learned</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Convert to uppercase, trim to 18 chars</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">2</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Bank Sort Code</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Destination Sort Code</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Remove hyphens, pad to 6 digits</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">3</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Account Number</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Destination Account Number</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Pad to 8 digits if shorter</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">4</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Amount (GBP)</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Amount (Pence)</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span> <span class="text-xs text-purple-500 ml-1" title="This mapping was confirmed correct in 14 previous imports">🧠 Learned</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Convert pounds to pence (× 100)</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">5</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Payment Reference</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Beneficiary Reference</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Convert to uppercase, trim to 18 chars</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">6</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Payment Date</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Processing Date</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Reformat date to YYYYMMDD</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">7</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Transaction Type</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Transaction Code</code></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Map to BACS transaction code</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-400">8</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Currency</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">—</code> <span class="text-xs text-gray-400">(validated only)</span></td>
+          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">Check currency is GBP</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+        </tr>
+        <!-- Medium confidence -->
+        <tr class="hover:bg-yellow-50 bg-yellow-50/30">
+          <td class="px-5 py-3 text-gray-400">9</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Payee Email</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Beneficiary Reference</code> <span class="text-xs text-amber-600">⚠️ Uncertain</span></td>
+          <td class="px-5 py-3"><span class="confidence-medium px-2 py-0.5 rounded-full text-xs font-medium">⚠️ Needs review</span> <span class="text-xs text-purple-500 ml-1" title="You corrected this mapping in a previous import — that correction has been remembered">🔄 Remembered</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">—</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-amber-600 hover:text-amber-800 font-medium">Review ⚠️</button></td>
+        </tr>
+        <!-- Low confidence -->
+        <tr class="hover:bg-red-50 bg-red-50/30">
+          <td class="px-5 py-3 text-gray-400">10</td>
+          <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Internal Cost Centre</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><span class="text-xs text-red-500 italic">No match found</span></td>
+          <td class="px-5 py-3"><span class="confidence-low px-2 py-0.5 rounded-full text-xs font-medium">❌ No match</span></td>
+          <td class="px-5 py-3 text-xs text-gray-500">—</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-red-600 hover:text-red-800 font-medium">Assign ✏️</button></td>
+        </tr>
+        <!-- Skipped columns -->
+        <tr class="hover:bg-gray-50 opacity-50">
+          <td class="px-5 py-3 text-gray-400">11</td>
+          <td class="px-5 py-3"><code class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs">Row Index</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><span class="text-xs text-gray-400 italic">Skipped</span></td>
+          <td class="px-5 py-3"><span class="text-xs text-gray-400">—</span></td>
+          <td class="px-5 py-3 text-xs text-gray-400">Not needed for BACS</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-gray-600">Include</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50 opacity-50">
+          <td class="px-5 py-3 text-gray-400">12</td>
+          <td class="px-5 py-3"><code class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs">Supplier Code</code></td>
+          <td class="px-5 py-3 text-center text-gray-300">→</td>
+          <td class="px-5 py-3"><span class="text-xs text-gray-400 italic">Skipped</span></td>
+          <td class="px-5 py-3"><span class="text-xs text-gray-400">—</span></td>
+          <td class="px-5 py-3 text-xs text-gray-400">Not needed for BACS</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-gray-600">Include</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Source preview -->
+  <div class="mt-6 bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div class="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
+      <h3 class="font-semibold text-gray-700 text-sm">Your Original Data (first 3 rows)</h3>
+      <span class="text-xs text-gray-400">supplier_payments_feb_2026.csv</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs font-mono">
+        <thead class="bg-gray-100"><tr>
+          <th class="px-3 py-2 text-left text-gray-500">Row</th>
+          <th class="px-3 py-2 text-left text-gray-500">Supplier Name</th>
+          <th class="px-3 py-2 text-left text-gray-500">Bank Sort Code</th>
+          <th class="px-3 py-2 text-left text-gray-500">Account Number</th>
+          <th class="px-3 py-2 text-left text-gray-500">Amount (GBP)</th>
+          <th class="px-3 py-2 text-left text-gray-500">Payment Reference</th>
+          <th class="px-3 py-2 text-left text-gray-500">Payment Date</th>
+        </tr></thead>
+        <tbody class="divide-y">
+          <tr><td class="px-3 py-2 text-gray-400">1</td><td class="px-3 py-2">Acme Supplies Ltd</td><td class="px-3 py-2">20-45-67</td><td class="px-3 py-2">12345678</td><td class="px-3 py-2">1,250.00</td><td class="px-3 py-2">INV-2026-0451</td><td class="px-3 py-2">28/02/2026</td></tr>
+          <tr><td class="px-3 py-2 text-gray-400">2</td><td class="px-3 py-2">Global Services Inc</td><td class="px-3 py-2">30-12-89</td><td class="px-3 py-2">87654321</td><td class="px-3 py-2">3,750.50</td><td class="px-3 py-2">PO-8892</td><td class="px-3 py-2">28/02/2026</td></tr>
+          <tr><td class="px-3 py-2 text-gray-400">3</td><td class="px-3 py-2">UK Office Furniture</td><td class="px-3 py-2">40-22-11</td><td class="px-3 py-2">5678901</td><td class="px-3 py-2">890.00</td><td class="px-3 py-2">FRN-2026-Q1</td><td class="px-3 py-2">28/02/2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Target / Transformed preview -->
+  <div class="mt-6 bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div class="px-5 py-3 border-b bg-green-50 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h3 class="font-semibold text-green-800 text-sm">Target Data Preview — after mapping &amp; transforms (first 3 rows)</h3>
+        <span class="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Transforms applied</span>
+      </div>
+      <span class="text-xs text-gray-400">BACS Standard 18 output</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs font-mono">
+        <thead class="bg-green-50"><tr>
+          <th class="px-3 py-2 text-left text-green-700">Row</th>
+          <th class="px-3 py-2 text-left text-green-700">Beneficiary Name</th>
+          <th class="px-3 py-2 text-left text-green-700">Dest. Sort Code</th>
+          <th class="px-3 py-2 text-left text-green-700">Dest. Account No.</th>
+          <th class="px-3 py-2 text-left text-green-700">Amount (Pence)</th>
+          <th class="px-3 py-2 text-left text-green-700">Beneficiary Ref</th>
+          <th class="px-3 py-2 text-left text-green-700">Processing Date</th>
+        </tr></thead>
+        <tbody class="divide-y">
+          <tr class="bg-green-50/30">
+            <td class="px-3 py-2 text-gray-400">1</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">ACME SUPPLIES LTD</span></td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">204567</span></td>
+            <td class="px-3 py-2">12345678</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">125000</span></td>
+            <td class="px-3 py-2">INV-2026-0451</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">20260228</span></td>
+          </tr>
+          <tr class="bg-green-50/30">
+            <td class="px-3 py-2 text-gray-400">2</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">GLOBAL SERVICES INC</span></td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">301289</span></td>
+            <td class="px-3 py-2">87654321</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">375050</span></td>
+            <td class="px-3 py-2">PO-8892</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">20260228</span></td>
+          </tr>
+          <tr class="bg-green-50/30">
+            <td class="px-3 py-2 text-gray-400">3</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">UK OFFICE FURNITURE</span></td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">402211</span></td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">05678901</span></td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">89000</span></td>
+            <td class="px-3 py-2">FRN-2026-Q1</td>
+            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">20260228</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-5 py-2 bg-green-50 border-t text-xs text-green-600 flex items-center gap-2">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>Green-highlighted values have been transformed from the source data above. Columns not mapped (e.g., Internal ID, Payment Type, Supplier Code) are dropped.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 5: VALIDATION RESULTS                                  -->
+<!-- ============================================================ -->
+<section id="screen-validation" class="screen fade-in">
+  <nav class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+    <a href="#" onclick="navigate('dashboard')" class="hover:text-lloyds-green">Dashboard</a><span>›</span>
+    <a href="#" onclick="navigate('detail','a3f1b2c4')" class="hover:text-lloyds-green">Import a3f1b2c4</a><span>›</span>
+    <span class="text-gray-700 font-medium">Validation Results</span>
+  </nav>
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Validation Results</h1>
+      <p class="text-sm text-gray-500 mt-1">85 checks run on 156 payment entries · Last checked: 26 Feb 2026, 09:16 AM</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="navigate('detail','a3f1b2c4')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">← Back</button>
+      <button class="px-4 py-2 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition" onclick="showAutoFixPreview()">🔧 Fix 6 Issues Automatically</button>
+      <button class="px-4 py-2 text-sm bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition">🔄 Re-check All</button>
+    </div>
+  </div>
+
+  <!-- Validation summary bar -->
+  <div class="grid grid-cols-5 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border p-4 text-center">
+      <div class="text-2xl font-bold text-gray-900">85</div>
+      <div class="text-xs text-gray-500">Checks Run</div>
+    </div>
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-green-700">74</div>
+      <div class="text-xs text-green-600">Passed</div>
+    </div>
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-red-700">4</div>
+      <div class="text-xs text-red-600">Errors</div>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-amber-700">8</div>
+      <div class="text-xs text-amber-600">Warnings</div>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-blue-700">6</div>
+      <div class="text-xs text-blue-600">Can Be Fixed Automatically</div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="flex items-center gap-2 mb-4">
+    <button class="tab-btn active px-4 py-1.5 text-sm rounded-full border" onclick="filterValidation('all', this)">All (11)</button>
+    <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('errors', this)">Errors (3)</button>
+    <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('warnings', this)">Warnings (8)</button>
+    <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('fixable', this)">Can Be Fixed Automatically (5)</button>
+  </div>
+
+  <!-- Validation table -->
+  <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left border-b">
+        <tr>
+          <th class="px-4 py-3 font-medium text-gray-500 w-28">Check</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-20">Severity</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-24">Area</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-28">Where</th>
+          <th class="px-4 py-3 font-medium text-gray-500">What's wrong</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-32">Current Value</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-20">Fix</th>
+          <th class="px-4 py-3 font-medium text-gray-500 w-10"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y" id="validation-tbody">
+        <!-- Error 1 -->
+        <tr class="hover:bg-red-50/30 validation-row error fixable">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-SC-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-red-100 text-red-700">Error</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Row 47, Col C</td>
+          <td class="px-4 py-3 text-gray-800">Sort code must be exactly 6 digits (found 5 digits: "4022-1")</td>
+          <td class="px-4 py-3"><code class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5 rounded">4022-1</code></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600" onclick="showExplainPanel('VR-SC-001')">ℹ️</button></td>
+        </tr>
+        <tr class="hidden fix-preview bg-green-50/50">
+          <td colspan="8" class="px-4 py-3">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="font-medium text-gray-600">Suggested Fix:</span>
+              <span class="diff-remove px-2 py-0.5 rounded">4022-1</span>
+              <span>→</span>
+              <span class="diff-add px-2 py-0.5 rounded">402211</span>
+              <span class="text-gray-500 ml-2">Remove hyphens, then pad to 6 digits</span>
+              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Error 2 -->
+        <tr class="hover:bg-red-50/30 validation-row error fixable">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-AN-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-red-100 text-red-700">Error</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Row 112, Col D</td>
+          <td class="px-4 py-3 text-gray-800">Account number must be exactly 8 digits (found 7 digits)</td>
+          <td class="px-4 py-3"><code class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5 rounded">5678901</code></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600" onclick="showExplainPanel('VR-AN-001')">ℹ️</button></td>
+        </tr>
+        <tr class="hidden fix-preview bg-green-50/50">
+          <td colspan="8" class="px-4 py-3">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="font-medium text-gray-600">Suggested Fix:</span>
+              <span class="diff-remove px-2 py-0.5 rounded">5678901</span>
+              <span>→</span>
+              <span class="diff-add px-2 py-0.5 rounded">05678901</span>
+              <span class="text-gray-500 ml-2">Add leading zero to make 8 digits</span>
+              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Error 3 -->
+        <tr class="hover:bg-red-50/30 validation-row error">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-AMT-003</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-red-100 text-red-700">Error</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payment</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Row 89, Col E</td>
+          <td class="px-4 py-3 text-gray-800">Amount exceeds £20M single transaction limit (£21,500,000.00)</td>
+          <td class="px-4 py-3"><code class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5 rounded">21500000.00</code></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600" onclick="showExplainPanel('VR-AMT-003')">ℹ️</button></td>
+        </tr>
+
+        <!-- Warnings -->
+        <tr class="hover:bg-amber-50/30 validation-row warning fixable">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-BEN-002</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Rows 3,7,45</td>
+          <td class="px-4 py-3 text-gray-800">Beneficiary name contains lowercase characters (BACS requires uppercase)</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">Acme Ltd</code></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+        <tr class="hidden fix-preview bg-green-50/50">
+          <td colspan="8" class="px-4 py-3">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="font-medium text-gray-600">Suggested Fix (3 rows):</span>
+              <span class="diff-remove px-2 py-0.5 rounded">Acme Ltd</span>
+              <span>→</span>
+              <span class="diff-add px-2 py-0.5 rounded">ACME LTD</span>
+              <span class="text-gray-500 ml-2">Convert to uppercase</span>
+              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning fixable">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-REF-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Rows 12,34</td>
+          <td class="px-4 py-3 text-gray-800">Beneficiary reference exceeds 18 characters (will be truncated)</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">INV-2026-0451-SUPP-A</code></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+        <tr class="hidden fix-preview bg-green-50/50">
+          <td colspan="8" class="px-4 py-3">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="font-medium text-gray-600">Suggested Fix (2 rows):</span>
+              <span class="diff-remove px-2 py-0.5 rounded">INV-2026-0451-SUPP-A</span>
+              <span>→</span>
+              <span class="diff-add px-2 py-0.5 rounded">INV-2026-0451-SUPP</span>
+              <span class="text-gray-500 ml-2">Shorten to 18 characters</span>
+              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-DUP-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payment</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Rows 78,79</td>
+          <td class="px-4 py-3 text-gray-800">Possible duplicate: same beneficiary, amount, and reference on consecutive rows</td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">—</span></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+
+        <tr class="hover:bg-red-50/30 validation-row error fixable">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-HT-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-red-100 text-red-700">Error</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">File Structure</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Header row</td>
+          <td class="px-4 py-3 text-gray-800">Header sequence number "00047" was already used in a previous import today — duplicates cause BACS rejection</td>
+          <td class="px-4 py-3"><code class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5 rounded">00047</code></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+        <tr class="hidden fix-preview bg-green-50/50">
+          <td colspan="8" class="px-4 py-3">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="font-medium text-gray-600">Auto-Fix:</span>
+              <span class="diff-remove px-2 py-0.5 rounded">00047</span>
+              <span>→</span>
+              <span class="diff-add px-2 py-0.5 rounded">00048</span>
+              <span class="text-gray-500 ml-2">Auto-generate next available unique sequence number</span>
+              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-HT-002</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">File Structure</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Trailer row</td>
+          <td class="px-4 py-3 text-gray-800">Trailer record count (155) does not match actual detail rows (156)</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">155</code></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-DATE-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payment</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Row 15</td>
+          <td class="px-4 py-3 text-gray-800">Processing date is on a weekend (Saturday) — BACS does not process on weekends</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">01/03/2026</code></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-CHAR-001</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Row 101</td>
+          <td class="px-4 py-3 text-gray-800">Beneficiary name contains non-BACS characters (accented: "é")</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">Café Royal</code></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+
+        <tr class="hover:bg-amber-50/30 validation-row warning">
+          <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-TC-002</code></td>
+          <td class="px-4 py-3"><span class="status-pill bg-amber-100 text-amber-700">Warning</span></td>
+          <td class="px-4 py-3 text-xs text-gray-600">Payment</td>
+          <td class="px-4 py-3 text-xs text-gray-600">Rows 5,23,87</td>
+          <td class="px-4 py-3 text-gray-800">Transaction code "01" used — verify this is an ordinary credit transfer, not a priority payment</td>
+          <td class="px-4 py-3"><code class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">01</code></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400">Manual</span></td>
+          <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600">ℹ️</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 6: PUBLISH / APPROVE                                   -->
+<!-- ============================================================ -->
+<section id="screen-publish" class="screen fade-in">
+  <nav class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+    <a href="#" onclick="navigate('dashboard')" class="hover:text-lloyds-green">Dashboard</a><span>›</span>
+    <a href="#" onclick="navigate('detail','a3f1b2c4')" class="hover:text-lloyds-green">Import a3f1b2c4</a><span>›</span>
+    <span class="text-gray-700 font-medium">Publish & Approve</span>
+  </nav>
+
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">Publish Confirmation</h1>
+  <p class="text-sm text-gray-500 mb-6">Review the final summary before approving the map and generating the output file.</p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left: Summary -->
+    <div class="lg:col-span-2 space-y-4">
+      <!-- Map name -->
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Map Name (friendly label for reuse)</label>
+        <input type="text" value="ERP-Supplier-Payments-v4" class="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+        <p class="text-xs text-gray-400 mt-1">This name will be used to identify the map in the Maps Registry for future reuse.</p>
+      </div>
+
+      <!-- Mapping summary -->
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h3 class="font-semibold text-gray-700 mb-3">Mapping Summary</h3>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div><span class="text-gray-500">Source Format:</span> <span class="font-medium">ERP CSV</span></div>
+          <div><span class="text-gray-500">Target Format:</span> <span class="font-medium">CBO CSV (BACS)</span></div>
+          <div><span class="text-gray-500">Fields Mapped:</span> <span class="font-medium">10 of 12 (2 ignored)</span></div>
+          <div><span class="text-gray-500">Transforms Applied:</span> <span class="font-medium">8 changes to your data</span></div>
+          <div><span class="text-gray-500">High Confidence:</span> <span class="font-medium text-green-600">10 fields</span></div>
+          <div><span class="text-gray-500">User Overrides:</span> <span class="font-medium text-blue-600">1 field corrected</span></div>
+        </div>
+      </div>
+
+      <!-- Validation summary -->
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h3 class="font-semibold text-gray-700 mb-3">Validation Summary</h3>
+        <div class="flex items-center gap-6 text-sm">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full"></div><span>74 Passed</span></div>
+          <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div><span>4 Errors → 3 Auto-Fixed, 1 Manual</span></div>
+          <div class="flex items-center gap-2"><div class="w-3 h-3 bg-amber-500 rounded-full"></div><span>8 Warnings → 3 Auto-Fixed, 5 Acknowledged</span></div>
+        </div>
+        <div class="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+          ✅ All critical errors resolved. File is safe to publish.
+        </div>
+      </div>
+
+      <!-- Supplemental values -->
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h3 class="font-semibold text-gray-700 mb-3">User-Supplied Values</h3>
+        <table class="w-full text-sm">
+          <tbody class="divide-y">
+            <tr><td class="py-2 text-gray-500 w-1/3">Debit Sort Code</td><td class="py-2 font-mono font-medium">309634</td></tr>
+            <tr><td class="py-2 text-gray-500">Debit Account Number</td><td class="py-2 font-mono font-medium">12345678</td></tr>
+            <tr><td class="py-2 text-gray-500">Processing Date</td><td class="py-2 font-mono font-medium">02/03/2026 (Monday)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Audit info -->
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h3 class="font-semibold text-gray-700 mb-3">Audit Trail</h3>
+        <div class="space-y-2 text-sm text-gray-600">
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:14</span> File uploaded by <strong>RG</strong></div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:14</span> Auto-detected as ERP CSV (156 entries)</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:15</span> Schema inferred, 12 fields detected</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:15</span> Map proposal generated (87% avg confidence)</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:16</span> Validation run: 3 errors, 8 warnings</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:17</span> Auto-fix applied: 5 issues resolved</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:18</span> User supplied 3 missing fields</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:18</span> Re-validation passed (0 errors, 5 warnings acknowledged)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5 sticky top-24">
+        <h3 class="font-semibold text-gray-700 mb-4">Review & Approve</h3>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-sm text-green-700">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            All mappings reviewed
+          </div>
+          <div class="flex items-center gap-2 text-sm text-green-700">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Validation passed
+          </div>
+          <div class="flex items-center gap-2 text-sm text-green-700">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Missing fields provided
+          </div>
+          <div class="flex items-center gap-2 text-sm text-green-700">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Auto-fixes applied
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-3">
+          <label class="flex items-start gap-2 text-sm">
+            <input type="checkbox" class="mt-0.5 rounded text-lloyds-green" checked />
+            <span>Save this map for future reuse</span>
+          </label>
+          <label class="flex items-start gap-2 text-sm">
+            <input type="checkbox" class="mt-0.5 rounded text-lloyds-green" />
+            <span>Remember supplemental values as defaults</span>
+          </label>
+        </div>
+
+        <div class="mt-6 space-y-2">
+          <button onclick="showModal('publish-success-modal')" class="w-full px-4 py-3 bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition font-medium text-sm">
+            ✅ Approve & Publish
+          </button>
+          <button onclick="navigate('detail','a3f1b2c4')" class="w-full px-4 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition text-sm">
+            ✗ Reject
+          </button>
+        </div>
+
+        <div class="mt-4 bg-gray-50 rounded-lg p-3 text-xs text-gray-500">
+          <strong>Output:</strong> CBO CSV will be generated with 156 payment entries and made available for download.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 7: MAPS REGISTRY                                       -->
+<!-- ============================================================ -->
+<section id="screen-maps" class="screen fade-in">
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Maps Registry</h1>
+      <p class="text-sm text-gray-500 mt-1">Browse published mapping definitions available for reuse.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <input type="text" placeholder="Search maps..." class="text-sm border rounded-lg pl-8 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+        <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Map Card 1 -->
+    <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition cursor-pointer">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-gray-900">ERP-Supplier-Payments-v3</h3>
+          <p class="text-xs text-gray-500 mt-0.5">ERP CSV → CBO CSV</p>
+        </div>
+        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+      </div>
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex justify-between"><span>Fields mapped:</span><span class="font-medium">10</span></div>
+        <div class="flex justify-between"><span>Transforms:</span><span class="font-medium">8</span></div>
+        <div class="flex justify-between"><span>Times reused:</span><span class="font-medium text-green-600">14</span></div>
+        <div class="flex justify-between"><span>Last used:</span><span class="font-medium">25 Feb 2026</span></div>
+        <div class="flex justify-between"><span>Version:</span><span class="font-medium">v3</span></div>
+      </div>
+      <div class="mt-3 pt-3 border-t flex items-center justify-between">
+        <span class="text-xs text-gray-400">Created by RG · 15 Jan 2026</span>
+        <button class="text-xs text-lloyds-green hover:underline">View Details →</button>
+      </div>
+    </div>
+
+    <!-- Map Card 2 -->
+    <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition cursor-pointer">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-gray-900">BACS-Payroll-Monthly</h3>
+          <p class="text-xs text-gray-500 mt-0.5">BACS XML → CBO CSV</p>
+        </div>
+        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+      </div>
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex justify-between"><span>Fields mapped:</span><span class="font-medium">15</span></div>
+        <div class="flex justify-between"><span>Transforms:</span><span class="font-medium">12</span></div>
+        <div class="flex justify-between"><span>Times reused:</span><span class="font-medium text-green-600">28</span></div>
+        <div class="flex justify-between"><span>Last used:</span><span class="font-medium">26 Feb 2026</span></div>
+        <div class="flex justify-between"><span>Version:</span><span class="font-medium">v5</span></div>
+      </div>
+      <div class="mt-3 pt-3 border-t flex items-center justify-between">
+        <span class="text-xs text-gray-400">Created by JD · 02 Nov 2025</span>
+        <button class="text-xs text-lloyds-green hover:underline">View Details →</button>
+      </div>
+    </div>
+
+    <!-- Map Card 3 -->
+    <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition cursor-pointer">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-gray-900">Std18-Fixed-Payroll</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Standard 18 → CBO CSV</p>
+        </div>
+        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+      </div>
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex justify-between"><span>Fields mapped:</span><span class="font-medium">18</span></div>
+        <div class="flex justify-between"><span>Transforms:</span><span class="font-medium">15</span></div>
+        <div class="flex justify-between"><span>Times reused:</span><span class="font-medium text-green-600">7</span></div>
+        <div class="flex justify-between"><span>Last used:</span><span class="font-medium">25 Feb 2026</span></div>
+        <div class="flex justify-between"><span>Version:</span><span class="font-medium">v2</span></div>
+      </div>
+      <div class="mt-3 pt-3 border-t flex items-center justify-between">
+        <span class="text-xs text-gray-400">Created by AK · 10 Dec 2025</span>
+        <button class="text-xs text-lloyds-green hover:underline">View Details →</button>
+      </div>
+    </div>
+
+    <!-- Map Card 4 -->
+    <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition cursor-pointer">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-gray-900">CBO-Bulk-Direct-Debit</h3>
+          <p class="text-xs text-gray-500 mt-0.5">CBO CSV → CBO CSV (v2)</p>
+        </div>
+        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Deprecated</span>
+      </div>
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex justify-between"><span>Fields mapped:</span><span class="font-medium">8</span></div>
+        <div class="flex justify-between"><span>Transforms:</span><span class="font-medium">4</span></div>
+        <div class="flex justify-between"><span>Times reused:</span><span class="font-medium">3</span></div>
+        <div class="flex justify-between"><span>Last used:</span><span class="font-medium">10 Jan 2026</span></div>
+        <div class="flex justify-between"><span>Version:</span><span class="font-medium">v1</span></div>
+      </div>
+      <div class="mt-3 pt-3 border-t flex items-center justify-between">
+        <span class="text-xs text-gray-400">Created by RG · 05 Sep 2025</span>
+        <button class="text-xs text-lloyds-green hover:underline">View Details →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================ -->
+<!-- MODAL: MISSING FIELDS                                         -->
+<!-- ============================================================ -->
+<div id="missing-fields-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="hideModal('missing-fields-modal')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="px-6 py-4 border-b flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Provide Missing Fields</h2>
+          <p class="text-sm text-gray-500">These mandatory BACS fields are not present in your ERP CSV file.</p>
+        </div>
+        <button onclick="hideModal('missing-fields-modal')" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Debit Account Sort Code <span class="text-red-500">*</span></label>
+          <input type="text" value="30-96-34" placeholder="SS-SS-SS" class="w-full border rounded-lg px-4 py-2 text-sm font-mono focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+          <p class="text-xs text-gray-400 mt-1">Format: SS-SS-SS or SSSSSS (6 digits)</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Debit Account Number <span class="text-red-500">*</span></label>
+          <input type="text" value="12345678" placeholder="AAAAAAAA" class="w-full border rounded-lg px-4 py-2 text-sm font-mono focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+          <p class="text-xs text-gray-400 mt-1">8-digit account number</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Debit Account Reference</label>
+          <input type="text" value="" placeholder="Optional — 6-18 characters" class="w-full border rounded-lg px-4 py-2 text-sm font-mono focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Processing Date <span class="text-red-500">*</span></label>
+          <input type="date" value="2026-03-02" class="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-lloyds-green focus:border-transparent" />
+          <p class="text-xs text-gray-400 mt-1">Must be a BACS working day (Mon–Fri, excl. bank holidays)</p>
+        </div>
+
+        <div class="bg-blue-50 rounded-lg p-3">
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" class="rounded text-lloyds-green" />
+            <span class="text-blue-800">Save these values as defaults for future ERP imports</span>
+          </label>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 rounded-b-2xl flex items-center justify-end gap-3">
+        <button onclick="hideModal('missing-fields-modal')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">Cancel</button>
+        <button onclick="hideModal('missing-fields-modal'); navigate('publish')" class="px-4 py-2 text-sm bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition">Submit & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: EXPLAINABILITY PANEL                                   -->
+<!-- ============================================================ -->
+<div id="explain-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="hideModal('explain-modal')"></div>
+  <div class="relative z-10 flex items-start justify-end min-h-screen">
+    <div class="bg-white shadow-2xl w-full max-w-md h-screen overflow-y-auto fade-in">
+      <div class="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+        <h2 class="text-lg font-semibold text-gray-900">Why This Failed</h2>
+        <button onclick="hideModal('explain-modal')" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Rule</div>
+          <div class="text-lg font-semibold text-gray-900" id="explain-rule-id">VR-SC-001</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Description</div>
+          <p class="text-sm text-gray-700">Sort code must be exactly 6 numeric digits per BACS Standard 18 specification, Section 3.2.1. The sort code identifies the destination bank branch and is validated against the Extended Industry Sort Code Directory (EISCD).</p>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">CBO Guide Reference</div>
+          <p class="text-sm text-gray-600">Lloyds CBO Guide v4.2, Table 5 — Mandatory Fields, Row "Sort Code": <em>"6-digit numeric, no hyphens or spaces."</em></p>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Current Value</div>
+          <code class="text-sm bg-red-50 text-red-700 px-3 py-1.5 rounded block">4022-1</code>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Problem</div>
+          <ul class="text-sm text-gray-700 list-disc ml-4 space-y-1">
+            <li>Contains a hyphen character (not numeric)</li>
+            <li>Only 5 numeric digits when stripped (requires 6)</li>
+          </ul>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="text-xs text-green-700 uppercase tracking-wide mb-2">Suggested Fix</div>
+          <div class="flex items-center gap-3 text-sm mb-2">
+            <span class="diff-remove px-2 py-0.5 rounded">4022-1</span>
+            <span>→</span>
+            <span class="diff-add px-2 py-0.5 rounded">402211</span>
+          </div>
+          <p class="text-xs text-green-600">What was done: <strong>Remove hyphens</strong> → <strong>Pad to 6 digits with leading zero</strong></p>
+          <p class="text-xs text-green-600 mt-1">This fix is safe — it keeps the original digits, removes non-numeric characters, and adds a leading zero to meet the 6-digit requirement.</p>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Rule Configuration (for technical reference)</div>
+          <div class="bg-gray-100 rounded-lg p-3 text-xs text-gray-500 italic">Internal rule: VR-SC-001 · Sort Code Format · REGEX pattern validation · Severity: ERROR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: AUTO-FIX PREVIEW                                       -->
+<!-- ============================================================ -->
+<div id="autofix-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="hideModal('autofix-modal')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl fade-in">
+      <div class="px-6 py-4 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">Auto-Fix Preview</h2>
+        <p class="text-sm text-gray-500">Review all 6 deterministic fixes before applying them.</p>
+      </div>
+      <div class="p-6 space-y-3 max-h-96 overflow-y-auto">
+        <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
+          <span class="w-20 text-xs font-mono text-gray-500">VR-SC-001</span>
+          <span class="text-gray-600">Row 47</span>
+          <span class="diff-remove px-2 py-0.5 rounded text-xs">4022-1</span>
+          <span>→</span>
+          <span class="diff-add px-2 py-0.5 rounded text-xs">402211</span>
+          <span class="ml-auto text-xs text-gray-400">Remove hyphens, pad digits</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
+          <span class="w-20 text-xs font-mono text-gray-500">VR-AN-001</span>
+          <span class="text-gray-600">Row 112</span>
+          <span class="diff-remove px-2 py-0.5 rounded text-xs">5678901</span>
+          <span>→</span>
+          <span class="diff-add px-2 py-0.5 rounded text-xs">05678901</span>
+          <span class="ml-auto text-xs text-gray-400">Add leading zero</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
+          <span class="w-20 text-xs font-mono text-gray-500">VR-BEN-002</span>
+          <span class="text-gray-600">3 rows</span>
+          <span class="diff-remove px-2 py-0.5 rounded text-xs">Acme Ltd</span>
+          <span>→</span>
+          <span class="diff-add px-2 py-0.5 rounded text-xs">ACME LTD</span>
+          <span class="ml-auto text-xs text-gray-400">Convert to uppercase</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
+          <span class="w-20 text-xs font-mono text-gray-500">VR-REF-001</span>
+          <span class="text-gray-600">2 rows</span>
+          <span class="diff-remove px-2 py-0.5 rounded text-xs">INV-2026-0451-SUPP-A</span>
+          <span>→</span>
+          <span class="diff-add px-2 py-0.5 rounded text-xs">INV-2026-0451-SUPP</span>
+          <span class="ml-auto text-xs text-gray-400">Shorten to 18 chars</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm border rounded-lg p-3 border-red-200 bg-red-50/30">
+          <span class="w-20 text-xs font-mono text-gray-500">VR-HT-001</span>
+          <span class="text-gray-600">Header</span>
+          <span class="diff-remove px-2 py-0.5 rounded text-xs">00047</span>
+          <span>→</span>
+          <span class="diff-add px-2 py-0.5 rounded text-xs">00048</span>
+          <span class="ml-auto text-xs text-gray-400">Next unique sequence number</span>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 rounded-b-2xl flex items-center justify-between">
+        <p class="text-xs text-gray-500">All fixes are safe and repeatable. The system will re-check everything automatically after applying.</p>
+        <div class="flex gap-2">
+          <button onclick="hideModal('autofix-modal')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">Cancel</button>
+          <button onclick="hideModal('autofix-modal')" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Apply All 6 Fixes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: PUBLISH SUCCESS                                        -->
+<!-- ============================================================ -->
+<div id="publish-success-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md fade-in text-center p-8">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900 mb-2">Published Successfully!</h2>
+      <p class="text-sm text-gray-500 mb-1">Map <strong>"ERP-Supplier-Payments-v4"</strong> has been saved.</p>
+      <p class="text-sm text-gray-500 mb-6">Output file <strong>CBO_a3f1b2c4.csv</strong> (156 entries) is ready for download.</p>
+      <div class="space-y-2">
+        <button class="w-full px-4 py-3 bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition text-sm font-medium">
+          ⬇️ Download CBO CSV Output
+        </button>
+        <button class="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium">
+          ⬇️ Download BACS XML Output
+        </button>
+        <button onclick="hideModal('publish-success-modal'); navigate('dashboard')" class="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm text-gray-600">
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FOOTER                                                        -->
+<!-- ============================================================ -->
+<footer class="border-t mt-12 py-4">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs text-gray-400">
+    <span>Payment File Import Automation · Lloyds Banking Group · Clickable Prototype v1.0</span>
+    <span>Built with Tailwind CSS · Not connected to backend</span>
+  </div>
+</footer>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT: Navigation & Interactions                         -->
+<!-- ============================================================ -->
+<script>
+// Navigation
+function navigate(screen, id) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // Show target screen
+  const target = document.getElementById('screen-' + screen);
+  if (target) {
+    target.classList.add('active');
+    target.classList.remove('fade-in');
+    void target.offsetWidth; // trigger reflow
+    target.classList.add('fade-in');
+  }
+  // Update nav
+  document.querySelectorAll('#main-nav .nav-link').forEach(link => {
+    link.classList.toggle('active', link.dataset.screen === screen);
+  });
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Update URL hash
+  window.location.hash = screen + (id ? '/' + id : '');
+}
+
+// Handle browser back/forward
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#', '').split('/');
+  if (hash[0]) navigate(hash[0], hash[1]);
+});
+
+// Initialize from hash
+window.addEventListener('load', () => {
+  const hash = window.location.hash.replace('#', '').split('/');
+  if (hash[0]) navigate(hash[0], hash[1]);
+  else navigate('dashboard');
+});
+
+// Upload simulation
+function simulateFileSelect() {
+  document.getElementById('drop-zone-empty').classList.add('hidden');
+  document.getElementById('drop-zone-selected').classList.remove('hidden');
+  document.getElementById('upload-btn').disabled = false;
+  document.getElementById('reuse-hint').classList.remove('hidden');
+}
+
+function clearFile() {
+  document.getElementById('drop-zone-empty').classList.remove('hidden');
+  document.getElementById('drop-zone-selected').classList.add('hidden');
+  document.getElementById('upload-btn').disabled = true;
+  document.getElementById('reuse-hint').classList.add('hidden');
+  document.getElementById('upload-progress').classList.add('hidden');
+}
+
+function simulateUpload() {
+  const progressDiv = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const uploadBtn = document.getElementById('upload-btn');
+
+  progressDiv.classList.remove('hidden');
+  uploadBtn.disabled = true;
+  uploadBtn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Processing…';
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 20 + 5;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      setTimeout(() => navigate('detail', 'a3f1b2c4'), 500);
+      // Reset upload state
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg> Upload &amp; Process';
+      clearFile();
+    }
+    progressBar.style.width = progress + '%';
+  }, 300);
+}
+
+// Modal
+function showModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function hideModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Validation filter
+function filterValidation(type, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.validation-row').forEach(row => {
+    const next = row.nextElementSibling;
+    if (type === 'all') {
+      row.style.display = '';
+    } else if (type === 'errors') {
+      row.style.display = row.classList.contains('error') ? '' : 'none';
+      if (next && next.classList.contains('fix-preview')) next.classList.add('hidden');
+    } else if (type === 'warnings') {
+      row.style.display = row.classList.contains('warning') ? '' : 'none';
+      if (next && next.classList.contains('fix-preview')) next.classList.add('hidden');
+    } else if (type === 'fixable') {
+      row.style.display = row.classList.contains('fixable') ? '' : 'none';
+      if (next && next.classList.contains('fix-preview')) next.classList.add('hidden');
+    }
+  });
+}
+
+// Show inline fix preview
+function showFixDetail(el) {
+  const row = el.closest('tr');
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains('fix-preview')) {
+    next.classList.toggle('hidden');
+  }
+}
+
+// Show explain panel
+function showExplainPanel(ruleId) {
+  document.getElementById('explain-rule-id').textContent = ruleId;
+  showModal('explain-modal');
+}
+
+// Show auto-fix modal
+function showAutoFixPreview() {
+  showModal('autofix-modal');
+}
+
+// Keyboard shortcut: Escape to close modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.fixed:not(.hidden)').forEach(m => {
+      m.classList.add('hidden');
+    });
+    document.body.style.overflow = '';
+  }
+});
+</script>
+
+</body>
+</html>

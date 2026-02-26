@@ -1,0 +1,29 @@
+# config/dev.yaml — Local Development Profile
+env: dev
+
+database:
+  type: sqlite
+  path: ./data/import.db
+
+file_storage:
+  type: local
+  base_path: ./data/storage
+
+llm:
+  base_url: http://localhost:11434/v1
+  model: mistral
+  api_key:             # empty — Ollama needs no key
+  timeout_ms: 15000
+  confidence_threshold: 0.6
+
+event_bus:
+  type: sync           # in-process CDI events
+
+auth:
+  type: mock
+  default_tenant_id: local
+  default_user: local-dev
+
+logging:
+  level: DEBUG
+  output: console

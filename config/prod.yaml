@@ -1,0 +1,31 @@
+# config/prod.yaml — Production Profile (GCP)
+env: prod
+
+database:
+  type: spanner+firestore
+  spanner_instance: map-registry
+  spanner_database: import-maps
+  firestore_project: ${GCP_PROJECT}
+
+file_storage:
+  type: gcs
+  bucket: ${GCP_PROJECT}-import-staging
+
+llm:
+  base_url: https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_REGION}/endpoints/${LLM_ENDPOINT}
+  model: gemini-1.5-flash
+  api_key: workload-identity      # resolved at runtime via workload identity federation
+  timeout_ms: 5000
+  confidence_threshold: 0.6
+
+event_bus:
+  type: pubsub
+  project: ${GCP_PROJECT}
+
+auth:
+  type: oauth2
+  provider: apigee
+
+logging:
+  level: INFO
+  output: cloud-logging
