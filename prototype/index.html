@@ -59,7 +59,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
-      <div class="flex items-center gap-3 cursor-pointer" onclick="navigate('dashboard')">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="navigate('landing')">
         <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-lloyds-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
@@ -101,9 +101,216 @@
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
 <!-- ============================================================ -->
+<!-- SCREEN 0: LANDING PAGE — File Import Mode Selection            -->
+<!-- ============================================================ -->
+<section id="screen-landing" class="screen active fade-in">
+  <div class="max-w-3xl mx-auto pt-12">
+    <div class="text-center mb-10">
+      <div class="w-16 h-16 bg-lloyds-light rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-lloyds-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Payment File Import</h1>
+      <p class="text-gray-500 text-lg">Choose how you'd like to import your payment file</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Manual File Import -->
+      <button onclick="navigate('manual')" class="bg-white rounded-2xl shadow-sm border-2 border-gray-200 p-8 hover:border-gray-400 hover:shadow-md transition text-left group">
+        <div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center mb-5 group-hover:bg-gray-200 transition">
+          <svg class="w-7 h-7 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Manual File Import</h2>
+        <p class="text-sm text-gray-500 leading-relaxed">Use the traditional file import process with manual field mapping, validation, and review steps.</p>
+        <div class="mt-5 flex items-center text-sm text-gray-400 group-hover:text-gray-600 transition">
+          <span>Get started</span>
+          <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </button>
+
+      <!-- AI Assisted File Import -->
+      <button onclick="navigate('ai-warning')" class="bg-white rounded-2xl shadow-sm border-2 border-lloyds-green/30 p-8 hover:border-lloyds-green hover:shadow-md transition text-left group relative overflow-hidden">
+        <div class="absolute top-3 right-3">
+          <span class="text-xs bg-lloyds-light text-lloyds-green font-semibold px-2.5 py-1 rounded-full">AI Powered</span>
+        </div>
+        <div class="w-14 h-14 bg-lloyds-light rounded-xl flex items-center justify-center mb-5 group-hover:bg-lloyds-green transition">
+          <svg class="w-7 h-7 text-lloyds-green group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">AI Assisted File Import</h2>
+        <p class="text-sm text-gray-500 leading-relaxed">Let AI automatically detect file types, map fields, validate data, and fix common issues — with your review and approval.</p>
+        <div class="mt-5 flex items-center text-sm text-lloyds-green font-medium group-hover:text-lloyds-dark transition">
+          <span>Get started</span>
+          <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </button>
+    </div>
+
+    <div class="mt-8 text-center text-xs text-gray-400">
+      <p>Both methods support BACS XML, CBO CSV, Standard 18, and ERP CSV file formats.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 0a: MANUAL FILE IMPORT — Holding Page                  -->
+<!-- ============================================================ -->
+<section id="screen-manual" class="screen fade-in">
+  <div class="max-w-2xl mx-auto pt-12">
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="#" onclick="navigate('landing')" class="hover:text-lloyds-green">File Import</a>
+      <span>›</span>
+      <span class="text-gray-700 font-medium">Manual Import</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm border p-12 text-center">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-3">Traditional Manual File Import</h1>
+      <p class="text-gray-500 max-w-md mx-auto mb-2">The manual file import process requires you to map each field individually, review validation results, and apply fixes step by step.</p>
+      <p class="text-gray-400 text-sm max-w-md mx-auto mb-8">This is the existing process. It provides full control over every step of the import.</p>
+
+      <div class="bg-gray-50 rounded-xl p-6 max-w-sm mx-auto mb-8">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Manual Import Steps</h3>
+        <div class="space-y-3 text-left">
+          <div class="flex items-center gap-3 text-sm text-gray-600">
+            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">1</div>
+            <span>Upload & select file format manually</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-gray-600">
+            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">2</div>
+            <span>Map each column to the target field</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-gray-600">
+            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">3</div>
+            <span>Review validation errors one by one</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-gray-600">
+            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">4</div>
+            <span>Fix issues manually & re-validate</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-gray-600">
+            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">5</div>
+            <span>Approve & publish output file</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-4">
+        <button onclick="navigate('landing')" class="px-6 py-2.5 text-sm border rounded-lg hover:bg-gray-50 text-gray-600">← Back</button>
+        <button class="px-6 py-2.5 text-sm bg-gray-400 text-white rounded-lg cursor-not-allowed" disabled>Coming Soon</button>
+      </div>
+      <p class="text-xs text-gray-400 mt-4">Manual import screens are not yet available in this prototype.<br />Please use AI Assisted Import to experience the automated workflow.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 0b: AI ASSISTED IMPORT — Warning / Info Page            -->
+<!-- ============================================================ -->
+<section id="screen-ai-warning" class="screen fade-in">
+  <div class="max-w-2xl mx-auto pt-12">
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="#" onclick="navigate('landing')" class="hover:text-lloyds-green">File Import</a>
+      <span>›</span>
+      <span class="text-gray-700 font-medium">AI Assisted Import</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <!-- Header Banner -->
+      <div class="bg-gradient-to-r from-lloyds-green to-lloyds-accent px-8 py-6 text-white">
+        <div class="flex items-center gap-3 mb-2">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <h1 class="text-xl font-bold">AI Assisted File Import</h1>
+        </div>
+        <p class="text-green-100 text-sm">Understand what happens when you use AI to process your payment file</p>
+      </div>
+
+      <div class="p-8">
+        <!-- What AI will do -->
+        <div class="mb-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Here's what the AI process will do:</h2>
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-lloyds-light rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-sm font-bold text-lloyds-green">1</span>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">Detect File Type Automatically</h3>
+                <p class="text-sm text-gray-500 mt-0.5">The system will read your file and automatically identify the format (ERP CSV, BACS XML, CBO CSV, or Standard 18) — no manual selection needed.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-lloyds-light rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-sm font-bold text-lloyds-green">2</span>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">Map Fields Using AI & Past Imports</h3>
+                <p class="text-sm text-gray-500 mt-0.5">AI will match your file columns to the required BACS payment fields, using patterns learned from previous successful imports and any corrections you've made before.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-lloyds-light rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-sm font-bold text-lloyds-green">3</span>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">Validate Against 85 BACS Rules</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Every payment entry will be checked against sort code, account number, amount limits, date, and format rules — all explained in plain English.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-lloyds-light rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-sm font-bold text-lloyds-green">4</span>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">Auto-Fix Common Issues</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Safe, deterministic fixes (like padding sort codes, converting to uppercase, reformatting dates) will be suggested — you review and approve each one before it's applied.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-lloyds-light rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-sm font-bold text-lloyds-green">5</span>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">You Stay In Control</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Nothing is published without your explicit approval. You can review every mapping, override AI suggestions, and reject changes at any step.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Important notice -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+          <div class="flex items-start gap-3">
+            <span class="text-amber-500 text-xl">⚠️</span>
+            <div>
+              <h3 class="font-semibold text-amber-800 text-sm">Important</h3>
+              <ul class="text-sm text-amber-700 mt-1 space-y-1">
+                <li>• AI-generated mappings should always be reviewed before approval</li>
+                <li>• The system learns from your corrections to improve accuracy over time</li>
+                <li>• All actions are logged in a full audit trail for compliance</li>
+                <li>• No data leaves your organisation — processing is on-premises</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="flex items-center justify-between">
+          <button onclick="navigate('landing')" class="px-6 py-2.5 text-sm border rounded-lg hover:bg-gray-50 text-gray-600">Cancel</button>
+          <button onclick="navigateAIImport()" class="px-6 py-2.5 text-sm bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition font-medium flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Proceed with AI Import
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
 <!-- SCREEN 1: DASHBOARD                                           -->
 <!-- ============================================================ -->
-<section id="screen-dashboard" class="screen active fade-in">
+<section id="screen-dashboard" class="screen fade-in">
   <!-- Summary cards -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white rounded-xl shadow-sm border p-5">
@@ -430,7 +637,7 @@
     <div class="bg-white rounded-xl shadow-sm border p-5">
       <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Validation</div>
       <div class="text-lg font-semibold text-amber-600">4 errors · 8 warnings</div>
-      <div class="text-xs text-gray-400">6 auto-fixable</div>
+      <div class="text-xs text-gray-400">5 auto-fixable</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm border p-5">
       <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Map Confidence</div>
@@ -473,7 +680,7 @@
         </div>
         <div>
           <div class="font-semibold text-gray-900">View Validation</div>
-          <div class="text-xs text-gray-500">4 errors, 8 warnings — 6 auto-fixable</div>
+          <div class="text-xs text-gray-500">4 errors, 8 warnings — 5 auto-fixable</div>
         </div>
       </div>
     </button>
@@ -592,9 +799,9 @@
           <td class="px-5 py-3"><code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">Account Number</code></td>
           <td class="px-5 py-3 text-center text-gray-300">→</td>
           <td class="px-5 py-3"><code class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">Destination Account Number</code></td>
-          <td class="px-5 py-3"><span class="confidence-high px-2 py-0.5 rounded-full text-xs font-medium">✅ Good match</span></td>
-          <td class="px-5 py-3 text-xs text-gray-500">Pad to 8 digits if shorter</td>
-          <td class="px-5 py-3 text-center"><button class="text-xs text-gray-400 hover:text-lloyds-green">Edit</button></td>
+          <td class="px-5 py-3"><span class="confidence-medium px-2 py-0.5 rounded-full text-xs font-medium">⚠️ Needs review</span></td>
+          <td class="px-5 py-3 text-xs text-amber-600">⚠️ Cannot auto-fix, user verification required</td>
+          <td class="px-5 py-3 text-center"><button class="text-xs text-amber-600 hover:text-amber-800 font-medium">Review ⚠️</button></td>
         </tr>
         <tr class="hover:bg-gray-50">
           <td class="px-5 py-3 text-gray-400">4</td>
@@ -753,7 +960,7 @@
             <td class="px-3 py-2 text-gray-400">3</td>
             <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">UK OFFICE FURNITURE</span></td>
             <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">402211</span></td>
-            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">05678901</span></td>
+            <td class="px-3 py-2"><span class="bg-amber-100 text-amber-800 px-1 rounded" title="⚠️ Needs user verification — sensitive data">5678901 ⚠️</span></td>
             <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">89000</span></td>
             <td class="px-3 py-2">FRN-2026-Q1</td>
             <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-1 rounded">20260228</span></td>
@@ -785,7 +992,7 @@
     </div>
     <div class="flex gap-2">
       <button onclick="navigate('detail','a3f1b2c4')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">← Back</button>
-      <button class="px-4 py-2 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition" onclick="showAutoFixPreview()">🔧 Fix 6 Issues Automatically</button>
+      <button class="px-4 py-2 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition" onclick="showAutoFixPreview()">🔧 Fix 5 Issues Automatically</button>
       <button class="px-4 py-2 text-sm bg-lloyds-green text-white rounded-lg hover:bg-lloyds-dark transition">🔄 Re-check All</button>
     </div>
   </div>
@@ -809,7 +1016,7 @@
       <div class="text-xs text-amber-600">Warnings</div>
     </div>
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-      <div class="text-2xl font-bold text-blue-700">6</div>
+      <div class="text-2xl font-bold text-blue-700">5</div>
       <div class="text-xs text-blue-600">Can Be Fixed Automatically</div>
     </div>
   </div>
@@ -819,7 +1026,7 @@
     <button class="tab-btn active px-4 py-1.5 text-sm rounded-full border" onclick="filterValidation('all', this)">All (11)</button>
     <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('errors', this)">Errors (3)</button>
     <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('warnings', this)">Warnings (8)</button>
-    <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('fixable', this)">Can Be Fixed Automatically (5)</button>
+    <button class="tab-btn px-4 py-1.5 text-sm rounded-full border text-gray-600 hover:bg-gray-50" onclick="filterValidation('fixable', this)">Can Be Fixed Automatically (4)</button>
   </div>
 
   <!-- Validation table -->
@@ -863,27 +1070,15 @@
         </tr>
 
         <!-- Error 2 -->
-        <tr class="hover:bg-red-50/30 validation-row error fixable">
+        <tr class="hover:bg-red-50/30 validation-row error">
           <td class="px-4 py-3"><code class="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded">VR-AN-001</code></td>
           <td class="px-4 py-3"><span class="status-pill bg-red-100 text-red-700">Error</span></td>
           <td class="px-4 py-3 text-xs text-gray-600">Payee Details</td>
           <td class="px-4 py-3 text-xs text-gray-600">Row 112, Col D</td>
-          <td class="px-4 py-3 text-gray-800">Account number must be exactly 8 digits (found 7 digits)</td>
+          <td class="px-4 py-3 text-gray-800">Account number must be exactly 8 digits (found 7 digits) — <span class="text-amber-600 font-medium">sensitive data, cannot auto-fix</span></td>
           <td class="px-4 py-3"><code class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5 rounded">5678901</code></td>
-          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium cursor-pointer hover:underline" onclick="showFixDetail(this)">🔧 Fix</span></td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">⚠️ Manual</span></td>
           <td class="px-4 py-3"><button class="text-gray-400 hover:text-gray-600" onclick="showExplainPanel('VR-AN-001')">ℹ️</button></td>
-        </tr>
-        <tr class="hidden fix-preview bg-green-50/50">
-          <td colspan="8" class="px-4 py-3">
-            <div class="flex items-center gap-4 text-xs">
-              <span class="font-medium text-gray-600">Suggested Fix:</span>
-              <span class="diff-remove px-2 py-0.5 rounded">5678901</span>
-              <span>→</span>
-              <span class="diff-add px-2 py-0.5 rounded">05678901</span>
-              <span class="text-gray-500 ml-2">Add leading zero to make 8 digits</span>
-              <button class="ml-auto px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Apply Fix</button>
-            </div>
-          </td>
         </tr>
 
         <!-- Error 3 -->
@@ -1068,7 +1263,7 @@
         <h3 class="font-semibold text-gray-700 mb-3">Validation Summary</h3>
         <div class="flex items-center gap-6 text-sm">
           <div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full"></div><span>74 Passed</span></div>
-          <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div><span>4 Errors → 3 Auto-Fixed, 1 Manual</span></div>
+          <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div><span>4 Errors → 2 Auto-Fixed, 2 Manual</span></div>
           <div class="flex items-center gap-2"><div class="w-3 h-3 bg-amber-500 rounded-full"></div><span>8 Warnings → 3 Auto-Fixed, 5 Acknowledged</span></div>
         </div>
         <div class="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
@@ -1097,7 +1292,7 @@
           <div class="flex items-center gap-2"><span class="text-gray-400">09:15</span> Schema inferred, 12 fields detected</div>
           <div class="flex items-center gap-2"><span class="text-gray-400">09:15</span> Map proposal generated (87% avg confidence)</div>
           <div class="flex items-center gap-2"><span class="text-gray-400">09:16</span> Validation run: 3 errors, 8 warnings</div>
-          <div class="flex items-center gap-2"><span class="text-gray-400">09:17</span> Auto-fix applied: 5 issues resolved</div>
+          <div class="flex items-center gap-2"><span class="text-gray-400">09:17</span> Auto-fix applied: 4 issues resolved</div>
           <div class="flex items-center gap-2"><span class="text-gray-400">09:18</span> User supplied 3 missing fields</div>
           <div class="flex items-center gap-2"><span class="text-gray-400">09:18</span> Re-validation passed (0 errors, 5 warnings acknowledged)</div>
         </div>
@@ -1378,7 +1573,7 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl fade-in">
       <div class="px-6 py-4 border-b">
         <h2 class="text-lg font-semibold text-gray-900">Auto-Fix Preview</h2>
-        <p class="text-sm text-gray-500">Review all 6 deterministic fixes before applying them.</p>
+        <p class="text-sm text-gray-500">Review all 5 deterministic fixes before applying them.</p>
       </div>
       <div class="p-6 space-y-3 max-h-96 overflow-y-auto">
         <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
@@ -1389,14 +1584,7 @@
           <span class="diff-add px-2 py-0.5 rounded text-xs">402211</span>
           <span class="ml-auto text-xs text-gray-400">Remove hyphens, pad digits</span>
         </div>
-        <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
-          <span class="w-20 text-xs font-mono text-gray-500">VR-AN-001</span>
-          <span class="text-gray-600">Row 112</span>
-          <span class="diff-remove px-2 py-0.5 rounded text-xs">5678901</span>
-          <span>→</span>
-          <span class="diff-add px-2 py-0.5 rounded text-xs">05678901</span>
-          <span class="ml-auto text-xs text-gray-400">Add leading zero</span>
-        </div>
+
         <div class="flex items-center gap-4 text-sm border rounded-lg p-3">
           <span class="w-20 text-xs font-mono text-gray-500">VR-BEN-002</span>
           <span class="text-gray-600">3 rows</span>
@@ -1426,7 +1614,7 @@
         <p class="text-xs text-gray-500">All fixes are safe and repeatable. The system will re-check everything automatically after applying.</p>
         <div class="flex gap-2">
           <button onclick="hideModal('autofix-modal')" class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">Cancel</button>
-          <button onclick="hideModal('autofix-modal')" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Apply All 6 Fixes</button>
+          <button onclick="hideModal('autofix-modal')" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Apply All 5 Fixes</button>
         </div>
       </div>
     </div>
@@ -1507,7 +1695,7 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('load', () => {
   const hash = window.location.hash.replace('#', '').split('/');
   if (hash[0]) navigate(hash[0], hash[1]);
-  else navigate('dashboard');
+  else navigate('landing');
 });
 
 // Upload simulation
@@ -1602,6 +1790,41 @@ function showExplainPanel(ruleId) {
 // Show auto-fix modal
 function showAutoFixPreview() {
   showModal('autofix-modal');
+}
+
+// AI Import flow: show upload screen with auto-processing, then navigate to dashboard
+function navigateAIImport() {
+  navigate('upload');
+  // Auto-select file and start upload after a brief delay
+  setTimeout(() => {
+    simulateFileSelect();
+    setTimeout(() => {
+      const progressDiv = document.getElementById('upload-progress');
+      const progressBar = document.getElementById('progress-bar');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      progressDiv.classList.remove('hidden');
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Processing…';
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            navigate('dashboard');
+            // Reset upload state
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg> Upload &amp; Process';
+            clearFile();
+          }, 600);
+        }
+        progressBar.style.width = progress + '%';
+      }, 400);
+    }, 500);
+  }, 300);
 }
 
 // Keyboard shortcut: Escape to close modals

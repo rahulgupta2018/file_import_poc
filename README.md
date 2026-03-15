@@ -138,5 +138,7 @@ See [config/dev.yaml](config/dev.yaml) and [config/prod.yaml](config/prod.yaml).
 
 ## Documentation
 
+
+
 - [Detailed Requirements](docs/detailed_requirements.md) — v1.1, 18 sections + 5 appendices
 - [Architecture](docs/architecture.md) — v1.3, 20+ sections, Mermaid diagrams

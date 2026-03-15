@@ -1,7 +1,7 @@
 # Payment File Import — Prototype Feature Guide
 
-> **Version:** 1.2  
-> **Date:** 26 February 2026  
+> **Version:** 1.3  
+> **Date:** 15 March 2026  
 > **Audience:** Business stakeholders, product owners, UX reviewers  
 > **How to run:** Open `index.html` in any modern browser (Chrome, Edge, Safari, Firefox). No installation required.
 
@@ -11,27 +11,32 @@
 
 1. [Overview](#1-overview)
 2. [Navigation & Layout](#2-navigation--layout)
-3. [Screen 1 — Dashboard](#3-screen-1--dashboard)
-4. [Screen 2 — Upload](#4-screen-2--upload)
-5. [Screen 3 — Import Detail](#5-screen-3--import-detail)
-6. [Screen 4 — Mapping Review](#6-screen-4--mapping-review)
-7. [Screen 5 — Validation Results](#7-screen-5--validation-results)
-8. [Screen 6 — Publish & Approve](#8-screen-6--publish--approve)
-9. [Screen 7 — Maps Registry](#9-screen-7--maps-registry)
-10. [Modals & Dialogs](#10-modals--dialogs)
-11. [User Journey (Happy Path)](#11-user-journey-happy-path)
-12. [Status Values Reference](#12-status-values-reference)
-13. [Prototype Limitations](#13-prototype-limitations)
+3. [Screen 0 — Landing Page (NEW)](#3-screen-0--landing-page-new)
+4. [Screen 0a — Manual Import Holding Page (NEW)](#4-screen-0a--manual-import-holding-page-new)
+5. [Screen 0b — AI Import Warning Page (NEW)](#5-screen-0b--ai-import-warning-page-new)
+6. [Screen 1 — Dashboard](#6-screen-1--dashboard)
+7. [Screen 2 — Upload](#7-screen-2--upload)
+8. [Screen 3 — Import Detail](#8-screen-3--import-detail)
+9. [Screen 4 — Mapping Review](#9-screen-4--mapping-review)
+10. [Screen 5 — Validation Results](#10-screen-5--validation-results)
+11. [Screen 6 — Publish & Approve](#11-screen-6--publish--approve)
+12. [Screen 7 — Maps Registry](#12-screen-7--maps-registry)
+13. [Modals & Dialogs](#13-modals--dialogs)
+14. [User Journey (Happy Path)](#14-user-journey-happy-path)
+15. [Status Values Reference](#15-status-values-reference)
+16. [Prototype Limitations](#16-prototype-limitations)
 
 ---
 
 ## 1. Overview
 
-This prototype demonstrates the **Payment File Import Automation** system — a tool that allows operations staff to upload payment files in various formats (ERP CSV, BACS XML, CBO CSV, Standard 18), have them automatically mapped, validated, and converted into the required BACS/CBO output format.
+This prototype demonstrates the **Payment File Import Automation** system — a tool that allows clients to upload payment files in various formats (ERP CSV, BACS XML, CBO CSV, Standard 18), have them automatically mapped, validated, and converted into the required Lloyds CBO required output format.
 
 The prototype covers the **complete end-to-end user journey** from file upload through to output download, using realistic mock data based on actual BACS and Lloyds CBO requirements.
 
 **Key capabilities demonstrated:**
+- **Landing page** with choice between Manual and AI Assisted import modes
+- **AI import onboarding** — a warning/explainer page so users understand what AI will do before proceeding
 - Automated file type detection and schema inference
 - AI-powered field mapping with confidence scores
 - 85-rule validation engine with clear error/warning reporting in plain language
@@ -50,7 +55,7 @@ The prototype covers the **complete end-to-end user journey** from file upload t
 
 | Element | Description |
 |---|---|
-| **Logo (top-left)** | "Payment File Import v1.0" — click to return to Dashboard |
+| **Logo (top-left)** | "Payment File Import v1.0" — click to return to the **Landing Page** |
 | **Dashboard tab** | Shows the import history list |
 | **Upload tab** | Navigate to file upload screen |
 | **Maps Registry tab** | Browse published mapping definitions |
@@ -58,6 +63,8 @@ The prototype covers the **complete end-to-end user journey** from file upload t
 | **User avatar (top-right)** | Shows logged-in user initials: `RG` |
 
 The active tab is highlighted with a **green underline**. Tabs work like a single-page app — no page reload.
+
+> **Note (v1.3):** The logo now navigates to the Landing Page instead of the Dashboard, reflecting the new entry-point flow.
 
 ### 2.2 Breadcrumbs
 
@@ -77,11 +84,130 @@ Each segment is clickable to navigate back.
 
 ---
 
-## 3. Screen 1 — Dashboard
+## 3. Screen 0 — Landing Page (NEW)
+
+> Added in v1.3
+
+**Purpose:** Entry point for the application. Lets the user choose between two import modes before proceeding.
+
+### 3.1 Page Layout
+
+- Centred layout with a document icon, page title "Payment File Import", and subtitle "Choose how you'd like to import your payment file"
+- Two side-by-side cards presented as large buttons
+
+### 3.2 Import Mode Cards
+
+| Card | Style | Icon | Description | Action |
+|---|---|---|---|---|
+| **Manual File Import** | Grey border, grey icon | Document icon | "Use the traditional file import process with manual field mapping, validation, and review steps." | Navigates to the **Manual Import Holding Page** |
+| **AI Assisted File Import** | Green border, "AI Powered" badge (top-right), Lloyds green icon | Lightning bolt / AI sparkle icon (`icons/ai-import-icon-2.svg`) | "Let AI automatically detect file types, map fields, validate data, and fix common issues — with your review and approval." | Navigates to the **AI Import Warning Page** |
+
+The AI card is visually distinguished with a green border, an "AI Powered" pill badge, and the custom sparkle icon.
+
+### 3.3 Footer Note
+
+"Both methods support BACS XML, CBO CSV, Standard 18, and ERP CSV file formats."
+
+---
+
+## 4. Screen 0a — Manual Import Holding Page (NEW)
+
+> Added in v1.3
+
+**Purpose:** Placeholder page for the traditional manual import workflow (not yet implemented in this prototype).
+
+### 4.1 Breadcrumb
+
+```
+File Import › Manual Import
+```
+
+### 4.2 Content
+
+- Large document/archive icon (grey)
+- Title: "Traditional Manual File Import"
+- Description explaining that manual import requires step-by-step field mapping, validation, and fixes
+- A numbered list of the 5 manual import steps:
+  1. Upload & select file format manually
+  2. Map each column to the target field
+  3. Review validation errors one by one
+  4. Fix issues manually & re-validate
+  5. Approve & publish output file
+
+### 4.3 Buttons
+
+| Button | Description |
+|---|---|
+| **← Back** | Returns to the Landing Page |
+| **Coming Soon** | Disabled grey button — indicates manual import screens are not yet available |
+
+A note below states: "Manual import screens are not yet available in this prototype. Please use AI Assisted Import to experience the automated workflow."
+
+---
+
+## 5. Screen 0b — AI Import Warning Page (NEW)
+
+> Added in v1.3
+
+**Purpose:** Explains what the AI-assisted import process will do, so users understand the new workflow before proceeding. Acts as an onboarding/consent gate.
+
+### 5.1 Breadcrumb
+
+```
+File Import › AI Assisted Import
+```
+
+### 5.2 Header Banner
+
+A green gradient banner (Lloyds green → accent green) with:
+- Lightning bolt icon
+- Title: "AI Assisted File Import"
+- Subtitle: "Understand what happens when you use AI to process your payment file"
+
+### 5.3 Process Steps
+
+A numbered list of 5 steps explaining what AI will do:
+
+| Step | Title | Description |
+|---|---|---|
+| **1** | Detect File Type Automatically | System reads the file and identifies the format — no manual selection needed |
+| **2** | Map Fields Using AI & Past Imports | AI matches columns to BACS fields using patterns from previous imports and user corrections |
+| **3** | Validate Against 85 BACS Rules | Every entry checked against sort code, account, amount, date, and format rules — explained in plain English |
+| **4** | Auto-Fix Common Issues | Safe, deterministic fixes suggested (padding, uppercase, date reformatting) — user reviews and approves each one |
+| **5** | You Stay In Control | Nothing published without explicit approval; mappings can be overridden; changes can be rejected at any step |
+
+### 5.4 Important Notice
+
+An **amber warning box** with the following bullet points:
+- AI-generated mappings should always be reviewed before approval
+- The system learns from your corrections to improve accuracy over time
+- All actions are logged in a full audit trail for compliance
+- No data leaves your organisation — processing is on-premises
+
+### 5.5 Action Buttons
+
+| Button | Description |
+|---|---|
+| **Cancel** | Returns to the Landing Page |
+| **Proceed with AI Import** | Triggers the AI import flow: navigates to the Upload screen, auto-selects a file, runs the upload progress bar, then navigates to the Dashboard |
+
+### 5.6 AI Import Flow (after clicking Proceed)
+
+When the user clicks "Proceed with AI Import":
+1. The Upload screen is shown
+2. A file is auto-selected (simulated) after a brief delay
+3. The upload progress bar animates (file processing simulation)
+4. On completion, the user is taken to the **Dashboard** where they can see import history and click into any import
+
+This provides a seamless demo experience without requiring the user to manually interact with the upload screen.
+
+---
+
+## 6. Screen 1 — Dashboard
 
 **Purpose:** Central hub showing all payment file imports and their current status.
 
-### 3.1 Summary Cards (top)
+### 6.1 Summary Cards (top)
 
 Four metric cards provide an at-a-glance overview:
 
@@ -92,7 +218,7 @@ Four metric cards provide an at-a-glance overview:
 | **In Progress** | 6 | Currently being processed; note "3 awaiting input" |
 | **Failed** | 3 | Imports that encountered errors; "2 retryable" |
 
-### 3.2 System Learning Banner (NEW)
+### 6.2 System Learning Banner
 
 Below the summary cards, a **purple banner** shows the system's learning status:
 
@@ -106,7 +232,7 @@ Below the summary cards, a **purple banner** shows the system's learning status:
 
 This banner addresses **Pain Point #7 (Self-Learning)**: users can see that the system is continuously improving from their feedback.
 
-### 3.3 Filters & Search
+### 6.3 Filters & Search
 
 | Control | What it does |
 |---|---|
@@ -115,7 +241,7 @@ This banner addresses **Pain Point #7 (Self-Learning)**: users can see that the 
 | **Search box** | Free-text search across file names |
 | **"New Import" button** | Green button → navigates to the Upload screen |
 
-### 3.4 Import History Table
+### 6.4 Import History Table
 
 Each row represents one import and contains:
 
@@ -132,17 +258,17 @@ Each row represents one import and contains:
 
 **Interaction:** Click any row → navigates to the **Import Detail** screen for that import.
 
-### 3.4 Pagination
+### 6.5 Pagination
 
 Below the table: "Showing 1-7 of 47 imports" with **Previous / Next** buttons. The "Previous" button is disabled on the first page.
 
 ---
 
-## 4. Screen 2 — Upload
+## 7. Screen 2 — Upload
 
 **Purpose:** Upload a new payment file for automated processing.
 
-### 4.1 Drop Zone
+### 7.1 Drop Zone
 
 A large dashed-border area in the centre of the screen. Users can:
 - **Drag and drop** a file onto the zone
@@ -159,7 +285,7 @@ A large dashed-border area in the centre of the screen. Users can:
 - File size: `245.6 KB · CSV`
 - "Remove" link to clear the selection
 
-### 4.2 Reuse Recommendation
+### 7.2 Reuse Recommendation
 
 After a file is selected, a **blue information banner** appears:
 
@@ -168,30 +294,30 @@ After a file is selected, a **blue information banner** appears:
 
 This demonstrates the system's ability to recognise repeat file formats and skip redundant mapping work.
 
-### 4.3 Upload & Process Button
+### 7.3 Upload & Process Button
 
 - **Disabled** until a file is selected
 - **Upload & Process Button** text changes to "Processing…" with status: "Detecting file type → Reading data → Identifying columns → Matching to payment fields…"
 - Button text changes to "Processing…" with a spinner
 - On completion → automatically navigates to the **Import Detail** screen
 
-### 4.4 Back Link
+### 7.4 Back Link
 
 "← Back to Dashboard" link at bottom-left.
 
 ---
 
-## 5. Screen 3 — Import Detail
+## 8. Screen 3 — Import Detail
 
 **Purpose:** Overview of a single import session — its current pipeline stage, key metrics, and available actions.
 
-### 5.1 Header
+### 8.1 Header
 
 - **File name** as page title with status pill (e.g., `Awaiting Input`)
 - Full **Import ID** (UUID format)
 - Upload timestamp
 
-### 5.2 Pipeline Progress Stepper
+### 8.2 Pipeline Progress Stepper
 
 A horizontal visual stepper showing all 7 stages of the processing pipeline:
 
@@ -207,7 +333,7 @@ A horizontal visual stepper showing all 7 stages of the processing pipeline:
 
 Completed steps are connected by green lines; pending steps by grey lines. The current step pulses to draw attention.
 
-### 5.3 Info Cards (4-column grid)
+### 8.3 Info Cards (4-column grid)
 
 | Card | Value | Sub-text |
 |---|---|---|
@@ -216,7 +342,7 @@ Completed steps are connected by green lines; pending steps by grey lines. The c
 | **Validation** | 3 errors · 8 warnings | "5 auto-fixable" |
 | **Map Confidence** | 87% | "10/12 fields high confidence" |
 
-### 5.4 Missing Fields Alert
+### 8.4 Missing Fields Alert
 
 An **amber warning banner** appears when the pipeline is in `AWAITING_INPUT` state:
 
@@ -224,9 +350,9 @@ An **amber warning banner** appears when the pipeline is in `AWAITING_INPUT` sta
 > This ERP CSV file is missing 2 mandatory BACS fields that must be provided before the import can proceed.  
 > **[Provide Missing Fields →]** button
 
-Clicking the button opens the **Missing Fields Modal** (see [Section 10.1](#101-missing-fields-modal)).
+Clicking the button opens the **Missing Fields Modal** (see [Section 13.1](#131-missing-fields-modal)).
 
-### 5.5 Action Cards (3-column grid)
+### 8.5 Action Cards (3-column grid)
 
 | Card | Description | State |
 |---|---|---|
@@ -238,11 +364,11 @@ Each card has a hover effect (green border + shadow) and an icon that turns gree
 
 ---
 
-## 6. Screen 4 — Mapping Review
+## 9. Screen 4 — Mapping Review
 
 **Purpose:** Review and adjust the AI-generated field mapping proposal before proceeding.
 
-### 6.1 Smart Mapping — Learning Banner (NEW)
+### 9.1 Smart Mapping — Learning Banner (NEW)
 
 A **purple banner** at the top of the mapping screen shows how past imports inform the current proposal:
 
@@ -259,7 +385,7 @@ This addresses **Pain Point #7 (Self-Learning)**: the system explicitly tells us
 - **🧠 Learned** (purple text) — on rows where the mapping was confirmed by 14+ previous imports (e.g., Row 1 Supplier Name → Beneficiary Name)
 - **🔄 Remembered** (purple text) — on rows where the user previously corrected the mapping and the system now applies that correction automatically (e.g., Row 9 Payee Email → Beneficiary Reference)
 
-### 6.2 Confidence Summary (3-column)
+### 9.2 Confidence Summary (3-column)
 
 | Category | Count | Description |
 |---|---|---|
@@ -267,7 +393,7 @@ This addresses **Pain Point #7 (Self-Learning)**: the system explicitly tells us
 | **Needs Review** (yellow) | 1 | Please check this one |
 | **Uncertain Match** (red) | 1 | May need to change this |
 
-### 6.3 Field Mapping Table
+### 9.3 Field Mapping Table
 
 Each row shows one field mapping:
 
@@ -281,7 +407,7 @@ Each row shows one field mapping:
 | **What will change** | Plain English description of data changes, e.g., "Convert to uppercase, trim to 18 chars", "Remove hyphens, pad to 6 digits", "Convert pounds to pence (× 100)" |
 | **Action** | `Edit` link (good match), `Review ⚠️` (needs review), `Assign ✏️` (no match) |
 
-### 6.4 Notable Mappings Demonstrated
+### 9.4 Notable Mappings Demonstrated
 
 | Row | What it shows |
 |---|---|
@@ -291,12 +417,12 @@ Each row shows one field mapping:
 | Row 10: Internal Cost Centre → No match | **Uncertain match** — no target field found. User must manually assign or confirm it should be skipped |
 | Rows 11-12: Row Index, Supplier Code | **Skipped columns** — shown at reduced opacity with “Not needed for BACS”. These are ERP-internal fields with no BACS equivalent |
 
-### 6.5 Checkboxes
+### 9.5 Checkboxes
 
 - **Show skipped columns** (checked by default) — toggle visibility of skipped fields
 - **Show what will change** — toggle the "What will change" column detail
 
-### 6.6 Your Original Data (Source Preview)
+### 9.6 Your Original Data (Source Preview)
 
 Below the mapping table, a preview of the first 3 rows of your raw uploaded data is displayed in a monospace table, showing:
 
@@ -308,7 +434,7 @@ Below the mapping table, a preview of the first 3 rows of your raw uploaded data
 
 This helps users verify that the mapping makes sense by seeing actual data values.
 
-### 6.7 Target Data Preview (NEW)
+### 9.7 Target Data Preview
 
 Directly below the source preview, a **green-tinted table** shows what the same 3 rows will look like **after** all mappings and transforms are applied:
 
@@ -326,18 +452,18 @@ Directly below the source preview, a **green-tinted table** shows what the same 
 
 This side-by-side comparison lets users immediately see the effect of every mapping and transform.
 
-### 6.8 Actions
+### 9.8 Actions
 
 - **"Accept All Mappings"** button (top-right, green) — approve the entire proposal
 - **"← Back"** button — return to Import Detail
 
 ---
 
-## 7. Screen 5 — Validation Results
+## 10. Screen 5 — Validation Results
 
 **Purpose:** Show all validation findings, allow auto-fix, and support re-validation.
 
-### 7.1 Validation Summary Bar (5-column)
+### 10.1 Validation Summary Bar (5-column)
 
 | Metric | Value | Colour |
 |---|---|---|
@@ -347,7 +473,7 @@ This side-by-side comparison lets users immediately see the effect of every mapp
 | Warnings | 8 | Amber |
 | Can Be Fixed Automatically | 6 | Blue |
 
-### 7.2 Filter Tabs
+### 10.2 Filter Tabs
 
 Four toggle buttons to filter the table:
 - **All (11)** — show everything (default, green active state)
@@ -355,7 +481,7 @@ Four toggle buttons to filter the table:
 - **Warnings (8)** — show only warnings
 - **Can Be Fixed Automatically (6)** — show only issues that can be automatically fixed
 
-### 7.3 Validation Results Table
+### 10.3 Validation Results Table
 
 Each row represents one validation finding:
 
@@ -370,7 +496,7 @@ Each row represents one validation finding:
 | **Fix** | Either `🔧 Fix` (clickable, green) for auto-fixable issues, or `Manual` (grey) |
 | **ℹ️** | Info button — opens the Explainability Panel (see [Section 10.3](#103-explainability-panel)) |
 
-### 7.4 Validation Issues Demonstrated
+### 10.4 Validation Issues Demonstrated
 
 | Rule ID | Severity | Issue | Auto-Fix? |
 |---|---|---|---|
@@ -386,7 +512,7 @@ Each row represents one validation finding:
 | `VR-CHAR-001` | Warning | Beneficiary name `Café Royal` contains non-BACS character `é` | No |
 | `VR-TC-002` | Warning | Transaction code "01" — verify if ordinary credit or priority payment | No |
 
-### 7.5 Inline Fix Preview
+### 10.5 Inline Fix Preview
 
 Clicking **"🔧 Fix"** on any auto-fixable row expands an inline panel showing:
 - **Before value** (red, strikethrough): e.g., `4022-1`
@@ -395,25 +521,25 @@ Clicking **"🔧 Fix"** on any auto-fixable row expands an inline panel showing:
 - **Transform name**: e.g., "Remove hyphens, pad digits"
 - **"Apply Fix"** button
 
-### 7.6 Action Buttons (top-right)
+### 10.6 Action Buttons (top-right)
 
 | Button | Description |
 |---|---|
 | **← Back** | Return to Import Detail |
-| **🔧 Fix 6 Issues Automatically** | Opens the Auto-Fix Preview modal (see [Section 10.4](#104-auto-fix-preview-modal)) to batch-review all fixable issues |
+| **🔧 Fix 6 Issues Automatically** | Opens the Auto-Fix Preview modal (see [Section 13.4](#134-auto-fix-preview-modal)) to batch-review all fixable issues |
 | **🔄 Re-check All** | Trigger a fresh validation run |
 
 ---
 
-## 8. Screen 6 — Publish & Approve
+## 11. Screen 6 — Publish & Approve
 
 **Purpose:** Final review gate before the map is published and the output file is generated.
 
-### 8.1 Map Name Input
+### 11.1 Map Name Input
 
 A text field where the user names the map for future reuse: `ERP-Supplier-Payments-v4`. This name appears in the Maps Registry.
 
-### 8.2 Mapping Summary
+### 11.2 Mapping Summary
 
 | Field | Value |
 |---|---|
@@ -424,7 +550,7 @@ A text field where the user names the map for future reuse: `ERP-Supplier-Paymen
 | High Confidence | 10 fields |
 | User Overrides | 1 field corrected |
 
-### 8.3 Validation Summary
+### 11.3 Validation Summary
 
 Visual summary with coloured dots:
 - ✅ 74 Passed
@@ -433,7 +559,7 @@ Visual summary with coloured dots:
 
 Green success banner: "All critical errors resolved. File is safe to publish."
 
-### 8.4 User-Supplied Values
+### 11.4 User-Supplied Values
 
 Table showing the values the user provided for missing fields:
 
@@ -443,7 +569,7 @@ Table showing the values the user provided for missing fields:
 | Debit Account Number | `12345678` |
 | Processing Date | `02/03/2026 (Monday)` |
 
-### 8.5 Audit Trail
+### 11.5 Audit Trail
 
 Chronological timeline of every action taken on this import:
 
@@ -458,7 +584,7 @@ Chronological timeline of every action taken on this import:
 | 09:18 | User supplied 3 missing fields |
 | 09:18 | Re-validation passed (0 errors, 5 warnings acknowledged) |
 
-### 8.6 Review Checklist (right sidebar)
+### 11.6 Review Checklist (right sidebar)
 
 A sticky checklist showing all prerequisites are met:
 - ✅ All mappings reviewed
@@ -466,33 +592,33 @@ A sticky checklist showing all prerequisites are met:
 - ✅ Missing fields provided
 - ✅ Auto-fixes applied
 
-### 8.7 Options
+### 11.7 Options
 
 - ☑️ **Save this map for future reuse** (checked by default)
 - ☐ **Remember supplemental values as defaults**
 
-### 8.8 Action Buttons
+### 11.8 Action Buttons
 
 | Button | Description |
 |---|---|
 | **✅ Approve & Publish** | Publishes the map and triggers output generation. Opens success modal |
 | **✗ Reject** | Cancels the publish. Returns to Import Detail |
 
-### 8.9 Output Info
+### 11.9 Output Info
 
 Note at the bottom: "Output: CBO CSV will be generated with 156 payment entries and made available for download."
 
 ---
 
-## 9. Screen 7 — Maps Registry
+## 12. Screen 7 — Maps Registry
 
 **Purpose:** Browse and manage published mapping definitions that can be reused for future imports.
 
-### 9.1 Search
+### 12.1 Search
 
 Search box to filter maps by name.
 
-### 9.2 Map Cards
+### 12.2 Map Cards
 
 Each published map is shown as a card with:
 
@@ -509,7 +635,7 @@ Each published map is shown as a card with:
 | **Created by / date** | Author and creation date |
 | **"View Details →"** | Link to see the full map definition |
 
-### 9.3 Maps Demonstrated
+### 12.3 Maps Demonstrated
 
 | Map | Format | Reuse Count | Notes |
 |---|---|---|---|
@@ -520,9 +646,9 @@ Each published map is shown as a card with:
 
 ---
 
-## 10. Modals & Dialogs
+## 13. Modals & Dialogs
 
-### 10.1 Missing Fields Modal
+### 13.1 Missing Fields Modal
 
 **Trigger:** Click "Provide Missing Fields →" on the Import Detail screen.
 
@@ -543,7 +669,7 @@ Each published map is shown as a card with:
 
 ---
 
-### 10.2 Publish Success Modal
+### 13.2 Publish Success Modal
 
 **Trigger:** Click "Approve & Publish" on the Publish screen.
 
@@ -560,7 +686,7 @@ Each published map is shown as a card with:
 
 ---
 
-### 10.3 Explainability Panel
+### 13.3 Explainability Panel
 
 **Trigger:** Click the **ℹ️** icon on any validation row.
 
@@ -583,7 +709,7 @@ This panel demonstrates the system's **explainability** — every validation dec
 
 ---
 
-### 10.4 Auto-Fix Preview Modal
+### 13.4 Auto-Fix Preview Modal
 
 **Trigger:** Click "🔧 Fix 6 Issues Automatically" on the Validation Results screen.
 
@@ -605,46 +731,100 @@ This panel demonstrates the system's **explainability** — every validation dec
 
 ---
 
-## 11. User Journey (Happy Path)
+## 14. User Journey Map (Happy Path)
 
-Follow this clickable path to experience the full workflow:
+The journey map below shows the end-to-end AI Assisted Import flow. Follow it left-to-right through the prototype.
+
+---
+
+### 🟢 Primary Journey — AI Assisted Import
 
 ```
-Step 1:  Dashboard  →  Click "New Import" button (top-right)
-                       OR click the "Upload" tab in the header
-
-Step 2:  Upload     →  Click the drop zone (simulates file selection)
-                       Notice the reuse recommendation banner
-                   →  Click "Upload & Process"
-                       Watch the progress bar animate
-
-Step 3:  Import Detail  →  Review the pipeline stepper (Input stage is active)
-                        →  Click "Provide Missing Fields →"
-                            Fill in sort code, account number, date
-                        →  Click "Submit & Continue"
-
-Step 4:  Publish    →  Review all summaries (mapping, validation, audit)
-                   →  Click "Approve & Publish"
-                       See the success modal with download options
-                   →  Click "Back to Dashboard"
-
-Alternative from Step 3:
-         Import Detail →  Click "Review Mapping" card
-         Mapping Review → Review confidence scores, transforms, source preview
-                       →  Click "← Back"
-
-         Import Detail →  Click "View Validation" card
-         Validation    →  Click "🔧 Fix" on any auto-fixable row to see inline preview
-                       →  Click "ℹ️" on any row to open the explainability panel
-                       →  Click "🔧 Auto-Fix 6 Issues" to batch-preview all fixes
-                       →  Click "← Back"
-
-Also try:  Maps Registry  →  Browse the 4 published map cards
+┌─────────────────┐     ┌─────────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  LANDING PAGE   │     │   AI WARNING PAGE    │     │     UPLOAD       │     │    DASHBOARD     │     │  IMPORT DETAIL   │     │     PUBLISH      │
+│                 │     │                      │     │                  │     │                  │     │                  │     │                  │
+│  Choose import  │────▶│  Review what AI      │────▶│  Auto-simulated  │────▶│  View import     │────▶│  Review pipeline │────▶│  Final review    │
+│  mode           │     │  will do             │     │  file upload &   │     │  history table   │     │  status & cards  │     │  & approve       │
+│                 │     │                      │     │  processing bar  │     │                  │     │                  │     │                  │
+│  🖱 Click "AI   │     │  🖱 Click "Proceed   │     │  ⏳ Progress bar  │     │  🖱 Click row    │     │  🖱 Click         │     │  🖱 Click         │
+│    Assisted"    │     │    with AI Import"   │     │     auto-runs    │     │    "a3f1b2c4"    │     │    "Provide      │     │    "Approve &    │
+│                 │     │                      │     │                  │     │                  │     │     Missing      │     │     Publish"     │
+└─────────────────┘     └──────────────────────┘     └──────────────────┘     └──────────────────┘     │     Fields →"    │     └────────┬─────────┘
+                                                                                                      └──────────────────┘              │
+                                                                                                                                        ▼
+                                                                                                                              ┌──────────────────┐
+                                                                                                                              │  SUCCESS MODAL   │
+                                                                                                                              │                  │
+                                                                                                                              │  ✅ Published!    │
+                                                                                                                              │  Download CBO /  │
+                                                                                                                              │  BACS output     │
+                                                                                                                              │                  │
+                                                                                                                              │  🖱 Click "Back   │
+                                                                                                                              │    to Dashboard" │
+                                                                                                                              └──────────────────┘
 ```
 
 ---
 
-## 12. Status Values Reference
+### 🔵 Exploration Branches (from Import Detail)
+
+These branches let you dive deeper into mapping and validation before publishing.
+
+```
+                                          ┌──────────────────────┐
+                                          │   MAPPING REVIEW     │
+                                          │                      │
+                                    ┌────▶│  Confidence scores   │────┐
+                                    │     │  Source → Target      │    │
+                                    │     │  preview              │    │
+                                    │     │  🧠 Learning labels   │    │
+┌──────────────────┐                │     └──────────────────────┘    │     ┌──────────────────┐
+│  IMPORT DETAIL   │                │                                 │     │  IMPORT DETAIL   │
+│                  │────────────────┤                                 ├────▶│  (return)        │
+│  🖱 Click card   │                │                                 │     └──────────────────┘
+└──────────────────┘                │     ┌──────────────────────┐    │
+                                    │     │  VALIDATION RESULTS  │    │
+                                    │     │                      │    │
+                                    └────▶│  85 checks run       │────┘
+                                          │  Inline fix previews │
+                                          │  🖱 🔧 Auto-fix 6    │──────▶ Auto-Fix Modal
+                                          │  🖱 ℹ️ Explainability │──────▶ Explain Panel
+                                          └──────────────────────┘
+```
+
+---
+
+### ⚪ Manual Import Path (holding page)
+
+```
+┌─────────────────┐     ┌──────────────────────┐
+│  LANDING PAGE   │     │  MANUAL IMPORT       │
+│                 │     │  (Holding Page)       │
+│  🖱 Click       │────▶│                       │
+│  "Manual File   │     │  "Coming Soon"        │
+│    Import"      │     │  5 steps listed       │
+│                 │     │  🖱 "← Back" to return │
+└─────────────────┘     └──────────────────────┘
+```
+
+---
+
+### Journey Summary Table
+
+| Stage | Screen | User Action | System Response | Emotion |
+|---|---|---|---|---|
+| **Choose** | Landing Page | Selects "AI Assisted File Import" | Shows AI warning page | 🤔 Curious |
+| **Understand** | AI Warning | Reads 5-step explainer, clicks "Proceed" | Auto-uploads file, shows progress bar | 😊 Reassured |
+| **Orient** | Dashboard | Clicks import row `a3f1b2c4` | Shows import detail with pipeline stepper | 👀 Exploring |
+| **Provide** | Import Detail → Modal | Fills in 3 missing BACS fields | Validates input, enables publish | ✍️ Contributing |
+| **Review** | Mapping Review *(optional)* | Checks field mappings & confidence | Highlights learned/remembered mappings | 🧐 Verifying |
+| **Validate** | Validation Results *(optional)* | Reviews errors, clicks auto-fix | Shows before/after diffs | 🔍 Inspecting |
+| **Approve** | Publish | Reviews summary, clicks "Approve & Publish" | Generates output file, shows success | ✅ Confident |
+| **Download** | Success Modal | Downloads CBO CSV or BACS XML | File ready | 🎉 Complete |
+
+---
+
+## 15. Status Values Reference
 
 | Status | Colour | Meaning |
 |---|---|---|
@@ -661,7 +841,7 @@ Also try:  Maps Registry  →  Browse the 4 published map cards
 
 ---
 
-## 13. Prototype Limitations
+## 16. Prototype Limitations
 
 This is a **static HTML prototype** for stakeholder feedback. The following are intentional limitations:
 
@@ -669,6 +849,8 @@ This is a **static HTML prototype** for stakeholder feedback. The following are 
 |---|---|
 | **Backend** | No live API — all data is hardcoded mock data |
 | **File upload** | No actual file is uploaded; clicking the drop zone simulates a file selection |
+| **Manual import** | The Manual File Import path shows a holding page only — manual screens are not implemented |
+| **AI import flow** | Clicking "Proceed" on the AI Warning page auto-simulates upload and navigates to the Dashboard |
 | **Filters** | Status and source type dropdowns are visual only; they don't filter the table |
 | **Search** | The search box is visual only |
 | **Pagination** | "Next" button is visual only |
@@ -690,4 +872,6 @@ This is a **static HTML prototype** for stakeholder feedback. The following are 
 7. **Is the Maps Registry useful?** Would you use this to manage reusable mappings?
 8. **Is the learning feedback visible?** Can you tell the system is improving from your corrections? (🧠 Dashboard banner, per-row "Learned" / "Remembered" labels)
 9. **Is the header sequence fix clear?** Does the auto-increment for duplicate sequence numbers make sense?
-10. **Missing anything?** Are there screens, fields, or actions you'd expect to see?
+10. **Is the landing page clear?** Is the choice between Manual and AI import intuitive?
+11. **Is the AI warning page helpful?** Does it adequately explain what the AI process will do?
+12. **Missing anything?** Are there screens, fields, or actions you'd expect to see?

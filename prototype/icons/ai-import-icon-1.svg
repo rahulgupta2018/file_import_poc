@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00a36c"/>
+      <stop offset="100%" style="stop-color:#004833"/>
+    </linearGradient>
+    <linearGradient id="sparkle1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e6f2ee"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded squircle background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg1)"/>
+  <!-- Document shape (subtle, behind) -->
+  <rect x="148" y="100" width="216" height="280" rx="16" ry="16" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+  <line x1="188" y1="180" x2="324" y2="180" stroke="rgba(255,255,255,0.2)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="188" y1="216" x2="298" y2="216" stroke="rgba(255,255,255,0.2)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="188" y1="252" x2="310" y2="252" stroke="rgba(255,255,255,0.2)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="188" y1="288" x2="270" y2="288" stroke="rgba(255,255,255,0.2)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Large 4-point sparkle (center-right) -->
+  <path d="M340 300 C340 300 356 260 356 240 C356 260 372 300 372 300 C372 300 356 340 356 360 C356 340 340 300 340 300 Z" fill="url(#sparkle1)" opacity="0.95">
+    <animateTransform attributeName="transform" type="scale" values="1;1.05;1" dur="3s" repeatCount="indefinite" additive="sum" origin="356 300"/>
+  </path>
+  <!-- Medium 4-point sparkle (top-right) -->
+  <path d="M370 140 C370 140 380 118 380 108 C380 118 390 140 390 140 C390 140 380 162 380 172 C380 162 370 140 370 140 Z" fill="white" opacity="0.8"/>
+  <!-- Small 4-point sparkle (bottom-left) -->
+  <path d="M130 350 C130 350 136 336 136 330 C136 336 142 350 142 350 C142 350 136 364 136 370 C136 364 130 350 130 350 Z" fill="white" opacity="0.6"/>
+  <!-- Lightning bolt (AI symbol) -->
+  <polygon points="256,120 220,268 262,268 232,400 310,238 268,238 298,120" fill="white" opacity="0.9"/>
+</svg>

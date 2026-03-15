@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#004833"/>
+      <stop offset="40%" style="stop-color:#006a4d"/>
+      <stop offset="100%" style="stop-color:#00a36c"/>
+    </linearGradient>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Rounded squircle background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg3)"/>
+  <!-- Document outline (rear, faded) -->
+  <g opacity="0.2">
+    <rect x="140" y="108" width="180" height="240" rx="14" ry="14" fill="none" stroke="white" stroke-width="6"/>
+    <path d="M280 108 L280 148 L320 148" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="176" y1="180" x2="280" y2="180" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="176" y1="210" x2="260" y2="210" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="176" y1="240" x2="270" y2="240" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="176" y1="270" x2="240" y2="270" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- Large sparkle (overlaid, right-center) -->
+  <path d="M340 240 C340 240 358 192 362 176 C366 192 384 240 384 240 C384 240 366 288 362 304 C358 288 340 240 340 240 Z" fill="white" opacity="0.9" filter="url(#softglow)"/>
+  <path d="M316 268 C316 268 342 260 356 258 C342 256 316 248 316 248 C316 248 342 240 356 238 " fill="none" stroke="white" stroke-width="0" opacity="0"/>
+  <!-- Horizontal arms of main sparkle -->
+  <path d="M296 258 C296 258 330 250 344 248 C358 246 392 258 392 258 C392 258 358 270 344 268 C330 266 296 258 296 258 Z" fill="white" opacity="0.7"/>
+  <!-- Medium sparkle (top-right) -->
+  <path d="M400 120 C400 120 408 98 410 88 C412 98 420 120 420 120 C420 120 412 142 410 152 C408 142 400 120 400 120 Z" fill="white" opacity="0.65"/>
+  <path d="M388 128 C388 128 400 124 408 122 C400 120 388 116 388 116" fill="none" stroke="white" stroke-width="0"/>
+  <!-- Horizontal arms for top sparkle -->
+  <path d="M388 120 C388 120 400 116 410 114 C420 116 432 120 432 120 C432 120 420 124 410 122 C400 124 388 120 388 120 Z" fill="white" opacity="0.45"/>
+  <!-- Small sparkle (bottom-center) -->
+  <path d="M230 380 C230 380 236 362 238 354 C240 362 246 380 246 380 C246 380 240 398 238 406 C236 398 230 380 230 380 Z" fill="white" opacity="0.5"/>
+  <path d="M220 380 C220 380 230 377 238 376 C246 377 256 380 256 380 C256 380 246 383 238 384 C230 383 220 380 220 380 Z" fill="white" opacity="0.35"/>
+  <!-- Tiny dot sparkles -->
+  <circle cx="160" cy="400" r="3" fill="white" opacity="0.4"/>
+  <circle cx="420" cy="190" r="2.5" fill="white" opacity="0.35"/>
+  <circle cx="120" cy="160" r="2" fill="white" opacity="0.3"/>
+</svg>
